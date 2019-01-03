@@ -1,0 +1,7 @@
+[package]
+name = "mp"
+version = "0.1.0"
+authors = ["kerryeon <besqer996@gnu.ac.kr>"]
+edition = "2018"
+
+[dependencies]
