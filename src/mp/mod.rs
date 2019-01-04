@@ -10,8 +10,11 @@
         Date: 2019-01-03
 ------------------------------------------------------------ */
 
-mod mp;
+mod config;
+mod tokenizer;
 
-fn main() {
-    mp::compile("Main: \n\tPrint: hello world\n");
+pub fn compile(source: &str) {
+    for token in tokenizer::tokenize(source) {
+        println!("Token [{}]", token);
+    }
 }
