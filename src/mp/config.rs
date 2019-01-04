@@ -22,6 +22,8 @@ const MACRO_OR      : OpToken = OpToken { token: "OR"   , order: 4 , is_op: true
 const MACRO_NOT     : OpToken = OpToken { token: "NOT"  , order: 6 , is_op: true  };
 const MACRO_IS      : OpToken = OpToken { token: "IS"   , order: 3 , is_op: true  };
 
+const MACRO_DEF     : OpToken = OpToken { token: "def"  , order: 0 , is_op: true  };
+
 const BPO           : OpToken = OpToken { token: "("    , order: 7 , is_op: true  };
 const BPC           : OpToken = OpToken { token: ")"    , order: 7 , is_op: true  };
 const BSO           : OpToken = OpToken { token: "["    , order: 7 , is_op: true  };
@@ -39,7 +41,7 @@ pub struct OpToken<'op> {
     pub is_op: bool,
 }
 
-pub const OP_ORDER: [OpToken; 16] = [
+pub const OP_ORDER: [OpToken; 17] = [
     OP_CALL     ,
     OP_TOWARD   ,
     OP_MATH     ,
@@ -50,6 +52,7 @@ pub const OP_ORDER: [OpToken; 16] = [
     MACRO_OR    ,
     MACRO_NOT   ,
     MACRO_IS    ,
+    MACRO_DEF   ,
     BPO         ,
     BPC         ,
     BSO         ,
@@ -58,17 +61,13 @@ pub const OP_ORDER: [OpToken; 16] = [
     BBC         ,
 ];
 
-pub const OP_TOKEN: [OpToken; 19] = [
+pub const OP_TOKEN: [OpToken; 15] = [
     OP_CALL         ,
     OP_TOWARD       ,
     OP_MATH         ,
     OP_STRING       ,
     OP_RAW          ,
     OP_NULL         ,
-    MACRO_AND       ,
-    MACRO_OR        ,
-    MACRO_NOT       ,
-    MACRO_IS        ,
     BPO             ,
     BPC             ,
     BSO             ,
