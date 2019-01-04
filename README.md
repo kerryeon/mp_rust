@@ -4,7 +4,7 @@ Main:
     Print: hello world
 ```
 `Machine Pseudo-Code` (이하 `MP`)는 알고리즘을 더욱 쉽게 기술하기 위한
-`범용 프로그래밍 언어`입니다.`
+`범용 프로그래밍 언어`입니다.
 [기존의 프로젝트 (Python)](https://github.com/kerryeon/mp)을 직접적으로 계승하였으며,
 기존의 단점을 개선하고 가독성에 최대한 집중하였습니다.
 많은 경우 `Rust`, `Python`과 `ML`에 영향을 받았습니다.
