@@ -11,6 +11,7 @@
 ------------------------------------------------------------ */
 
 use crate::mp::config;
+use crate::mp::token::Token;
 
 type NodeNum = usize;
 
@@ -70,9 +71,6 @@ impl Node {
     fn is_root(&self) -> bool {
         self.current == self.root
     }
-    fn is_root_upper(&self) -> bool {
-        self.parent == self.root
-    }
 
     fn insert_left(&mut self, node: &mut Node, node_index: NodeNum) -> NodeNum {
         self.left = node_index;
@@ -99,7 +97,7 @@ impl Node {
         node.token = String::new();
         node.update(node_index, self.current, node_index)
     }
-    fn insert_inline(&mut self, node: &mut Node, node_index: NodeNum) -> NodeNum {
+    fn insert_inline(&mut self, node: &mut Node) -> NodeNum {
         if self.is_indent {
             self.is_indent = false;
             self.token = node.token.clone();
@@ -133,7 +131,7 @@ enum ASTInsert {
 }
 
 impl AST {
-    pub fn new() -> AST {
+    fn new() -> AST {
         let node = Node::root();
         let mut nodes = Vec::new();
         nodes.push(node);
@@ -143,7 +141,7 @@ impl AST {
         }
     }
 
-    pub fn attach(&mut self, token: String) {
+    pub fn attach(&mut self, token: Token) {
         let node_index = self.nodes.len();
         let mut node = Node::from(token);
 
@@ -155,13 +153,12 @@ impl AST {
             ASTInsert::Right        => parent.insert_right(&mut node, node_index),
             ASTInsert::RightRoot    => parent.insert_right_root(&mut node, node_index),
             ASTInsert::None         => NIL,
-            ASTInsert::Inline       => parent.insert_inline(&mut node, node_index),
+            ASTInsert::Inline       => parent.insert_inline(&mut node),
         };
 
         if node_index != NIL {
             self.now = node_index;
             self.nodes.push(node);
-            let node = &self.nodes[node_index];
         }
     }
 
@@ -215,6 +212,10 @@ impl AST {
             let parent = &self.nodes[parent.parent];
             if parent.is_root() { return (parent.current, ASTInsert::Left) }
         }
-        (parent.current, ASTInsert::LeftSwap)
+        (parent.current, if node.order == parent.order { ASTInsert::Left } else { ASTInsert::LeftSwap })
     }
+}
+
+pub fn new_ast() -> AST {
+    AST::new()
 }

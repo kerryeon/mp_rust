@@ -10,33 +10,34 @@
         Date: 2019-01-04
 ------------------------------------------------------------ */
 
-const OP_CALL           : OpToken = OpToken { token: ":"    , order: 0 , is_op: true , is_indent: false, is_end: false };
-const OP_TOWARD         : OpToken = OpToken { token: "->"   , order: 1 , is_op: true , is_indent: false, is_end: false };
-const OP_MATH           : OpToken = OpToken { token: "$"    , order: 2 , is_op: true , is_indent: false, is_end: false };
-const OP_STRING         : OpToken = OpToken { token: "%"    , order: 2 , is_op: true , is_indent: false, is_end: false };
-const OP_RAW            : OpToken = OpToken { token: "!"    , order: 2 , is_op: true , is_indent: false, is_end: false };
-const OP_NULL           : OpToken = OpToken { token: "?"    , order: 2 , is_op: true , is_indent: false, is_end: false };
+const OP_CALL           : OpToken = OpToken::op     (":"     , 0);
+const OP_TOWARD         : OpToken = OpToken::op     ("->"    , 1);
+const OP_MATH           : OpToken = OpToken::op     ("$"     , 2);
+const OP_STRING         : OpToken = OpToken::op     ("%"     , 2);
+const OP_RAW            : OpToken = OpToken::op     ("!"     , 2);
+const OP_NULL           : OpToken = OpToken::op     ("?"     , 2);
 
-const MACRO_AND         : OpToken = OpToken { token: "AND"  , order: 5 , is_op: true , is_indent: false, is_end: false };
-const MACRO_OR          : OpToken = OpToken { token: "OR"   , order: 4 , is_op: true , is_indent: false, is_end: false };
-const MACRO_NOT         : OpToken = OpToken { token: "NOT"  , order: 6 , is_op: true , is_indent: false, is_end: false };
-const MACRO_IS          : OpToken = OpToken { token: "IS"   , order: 3 , is_op: true , is_indent: false, is_end: false };
+const MACRO_AND         : OpToken = OpToken::op     ("AND"   , 5);
+const MACRO_OR          : OpToken = OpToken::op     ("OR"    , 4);
+const MACRO_NOT         : OpToken = OpToken::op     ("NOT"   , 6);
+const MACRO_IS          : OpToken = OpToken::op     ("IS"    , 3);
 
-const MACRO_DEF         : OpToken = OpToken { token: "def"  , order: 0 , is_op: true , is_indent: false, is_end: false };
+const MACRO_DEF         : OpToken = OpToken::op     ("def"   , 0);
 
-const BPO               : OpToken = OpToken { token: "("    , order: 7 , is_op: true , is_indent: false, is_end: false };
-const BPC               : OpToken = OpToken { token: ")"    , order: 7 , is_op: true , is_indent: false, is_end: false };
-const BSO               : OpToken = OpToken { token: "["    , order: 7 , is_op: true , is_indent: false, is_end: false };
-const BSC               : OpToken = OpToken { token: "]"    , order: 7 , is_op: true , is_indent: false, is_end: false };
-const BBO               : OpToken = OpToken { token: "{"    , order: 7 , is_op: true , is_indent: false, is_end: false };
-const BBC               : OpToken = OpToken { token: "}"    , order: 7 , is_op: true , is_indent: false, is_end: false };
+const BPO               : OpToken = OpToken::op     ("("     , 7);
+const BPC               : OpToken = OpToken::op     (")"     , 7);
+const BSO               : OpToken = OpToken::op     ("["     , 7);
+const BSC               : OpToken = OpToken::op     ("]"     , 7);
+const BBO               : OpToken = OpToken::op     ("{"     , 7);
+const BBC               : OpToken = OpToken::op     ("}"     , 7);
 
-const INDENT_JUMP       : OpToken = OpToken { token: "\n"   , order: -1, is_op: false, is_indent: false, is_end: true  };
-const INDENT_TAB        : OpToken = OpToken { token: "\t"   , order: -1, is_op: false, is_indent: true , is_end: false };
-const INDENT_SPACE      : OpToken = OpToken { token: " "    , order: -1, is_op: false, is_indent: true , is_end: false };
-const INDENT_COMMENT    : OpToken = OpToken { token: "#"    , order: -1, is_op: false, is_indent: false, is_end: false };
+const INDENT_JUMP       : OpToken = OpToken::jump   ("\n");
+const INDENT_TAB        : OpToken = OpToken::indent ("\t");
+const INDENT_SPACE      : OpToken = OpToken::indent (" " );
+const INDENT_COMMENT    : OpToken = OpToken::comment("#" );
 
 pub type OpOrder = isize;
+const OP_ORDER_BOTTOM: OpOrder = 15;
 
 pub struct OpToken<'op> {
     pub token: &'op str,
@@ -44,6 +45,73 @@ pub struct OpToken<'op> {
     pub is_op: bool,
     pub is_indent: bool,
     pub is_end: bool,
+}
+
+impl <'op> OpToken <'op> {
+    const fn new(
+        token: &'op str,
+        order: OpOrder,
+        is_op: bool,
+        is_indent: bool,
+        is_end: bool,
+    ) -> OpToken<'op> {
+        OpToken {
+            token,
+            order,
+            is_op,
+            is_indent,
+            is_end,
+        }
+    }
+
+    const fn op(
+        token: &'op str,
+        order: OpOrder,
+    ) -> OpToken<'op> {
+        OpToken::new(
+            token,
+            order,
+            true,
+            false,
+            false,
+        )
+    }
+
+    const fn indent(
+        token: &'op str,
+    ) -> OpToken<'op> {
+        OpToken::new(
+            token,
+            OP_ORDER_BOTTOM,
+            false,
+            true,
+            false,
+        )
+    }
+
+    const fn jump(
+        token: &'op str,
+    ) -> OpToken<'op> {
+        OpToken::new(
+            token,
+            OP_ORDER_BOTTOM,
+            false,
+            false,
+            true,
+        )
+    }
+
+    const fn comment(
+        token: &'op str,
+    ) -> OpToken<'op> {
+        OpToken::new(
+            token,
+            OP_ORDER_BOTTOM,
+            false,
+            false,
+            true,
+        )
+    }
 }
 
 pub const OP_ORDER: [OpToken; 21] = [

@@ -11,12 +11,13 @@
 ------------------------------------------------------------ */
 
 use crate::mp::config;
+use crate::mp::token;
 
 pub struct Tokenizer <'source> {
     begin: usize,
     count: usize,
     has_op: bool,
-    op: Option<&'source str>,
+    op: &'source str,
     source: &'source str,
 }
 
@@ -26,19 +27,19 @@ impl <'source> Tokenizer <'source> {
             begin: 0,
             count: 0,
             has_op: false,
-            op: None,
+            op: "",
             source,
         }
     }
 }
 
 impl <'source> Iterator for Tokenizer <'source> {
-    type Item = &'source str;
+    type Item = token::Token;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.has_op {
             self.has_op = false;
-            return self.op;
+            return Some(token::new(self.op))
         }
 
         self.begin = self.count;
@@ -50,10 +51,10 @@ impl <'source> Iterator for Tokenizer <'source> {
                     let ret = &self.source[self.begin..self.count-op.token.len()];
                     if ret.len() > 0 {
                         self.has_op = true;
-                        self.op = Some(&self.source[self.count - op.token.len()..self.count]);
-                        return Some(ret)
+                        self.op = &self.source[self.count - op.token.len()..self.count];
+                        return Some(token::new(ret))
                     }
-                    return Some(current)
+                    return Some(token::new(current))
                 }
             }
         }
