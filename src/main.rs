@@ -13,5 +13,5 @@
 mod mp;
 
 fn main() {
-    mp::compile("Main: \n\tPrint: hello world\n");
+    mp::compile("def Main: \n\t\t\tPrint: hello world\n");
 }

@@ -12,9 +12,12 @@
 
 mod config;
 mod tokenizer;
+mod parser;
 
 pub fn compile(source: &str) {
+    let mut root = parser::AST::new();
     for token in tokenizer::tokenize(source) {
-        println!("Token [{}]", token);
+        root.attach(token.to_string());
     }
+    root.tree();
 }
