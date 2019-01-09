@@ -13,7 +13,7 @@
 use crate::mp::config;
 use crate::mp::token;
 
-pub struct Tokenizer <'source> {
+pub struct Tokenizer<'source> {
     begin: usize,
     count: usize,
     has_op: bool,
@@ -21,8 +21,8 @@ pub struct Tokenizer <'source> {
     source: &'source str,
 }
 
-impl <'source> Tokenizer <'source> {
-    fn new(source: &str) -> Tokenizer {
+impl<'source> Tokenizer<'source> {
+    const fn new(source: &str) -> Tokenizer {
         Tokenizer {
             begin: 0,
             count: 0,
@@ -33,7 +33,7 @@ impl <'source> Tokenizer <'source> {
     }
 }
 
-impl <'source> Iterator for Tokenizer <'source> {
+impl<'source> Iterator for Tokenizer<'source> {
     type Item = token::Token;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -62,6 +62,6 @@ impl <'source> Iterator for Tokenizer <'source> {
     }
 }
 
-pub fn tokenize(source: &str) -> Tokenizer {
+pub const fn tokenize(source: &str) -> Tokenizer {
     Tokenizer::new(source)
 }
