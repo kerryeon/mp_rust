@@ -40,6 +40,7 @@ const INDENT_JUMP       : OpToken = OpToken::jump           ("\n"   );
 const INDENT_TAB        : OpToken = OpToken::indent         ("\t"   );
 const INDENT_SPACE      : OpToken = OpToken::indent         (" "    );
 const INDENT_COMMENT    : OpToken = OpToken::comment        ("#"    );
+const SEPARATOR         : OpToken = OpToken::separator      (","    );
 
 pub type OpOrder = usize;
 const OP_ORDER_TOP: OpOrder = 0;
@@ -49,6 +50,7 @@ const NO_SHELL: usize = 0;
 pub struct OpConfig {
     pub order: OpOrder,
     pub is_op: bool,
+    pub is_separator: bool,
     pub is_indent: bool,
     pub is_end: bool,
     pub is_comment: bool,
@@ -60,6 +62,7 @@ impl OpConfig {
     const fn new(
         order: OpOrder,
         is_op: bool,
+        is_separator: bool,
         is_indent: bool,
         is_end: bool,
         is_comment: bool,
@@ -69,6 +72,7 @@ impl OpConfig {
         OpConfig {
             order,
             is_op,
+            is_separator,
             is_indent,
             is_end,
             is_comment,
@@ -84,6 +88,7 @@ impl OpConfig {
             false,
             false,
             false,
+            false,
             NO_SHELL,
             NO_SHELL,
         )
@@ -93,6 +98,7 @@ impl OpConfig {
         OpConfig::new(
             self.order,
             self.is_op,
+            self.is_separator,
             self.is_indent,
             self.is_end,
             self.is_comment,
@@ -119,6 +125,7 @@ impl<'op> OpToken<'op> {
         token: &'op str,
         order: OpOrder,
         is_op: bool,
+        is_separator: bool,
         is_indent: bool,
         is_end: bool,
         is_comment: bool,
@@ -130,6 +137,7 @@ impl<'op> OpToken<'op> {
             config: OpConfig::new(
                 order,
                 is_op,
+                is_separator,
                 is_indent,
                 is_end,
                 is_comment,
@@ -150,6 +158,23 @@ impl<'op> OpToken<'op> {
             false,
             false,
             false,
+            false,
+            NO_SHELL,
+            NO_SHELL,
+        )
+    }
+
+    const fn separator(
+        token: &'op str,
+    ) -> OpToken<'op> {
+        OpToken::new(
+            token,
+            OP_ORDER_BOTTOM-1,
+            true,
+            true,
+            false,
+            false,
+            false,
             NO_SHELL,
             NO_SHELL,
         )
@@ -164,6 +189,7 @@ impl<'op> OpToken<'op> {
         OpToken::new(
             token,
             OP_ORDER_BOTTOM,
+            false,
             false,
             is_indent,
             is_end,
@@ -217,6 +243,7 @@ impl<'op> OpToken<'op> {
             false,
             false,
             false,
+            false,
             map,
             NO_SHELL,
         )
@@ -233,13 +260,14 @@ impl<'op> OpToken<'op> {
             false,
             false,
             false,
+            false,
             NO_SHELL,
             map,
         )
     }
 }
 
-pub const OP_ORDER: [OpToken; 25] = [
+pub const OP_ORDER: [OpToken; 26] = [
     OP_CALL         ,
     OP_TOWARD       ,
     OP_STRING       ,
@@ -265,9 +293,10 @@ pub const OP_ORDER: [OpToken; 25] = [
     INDENT_TAB      ,
     INDENT_SPACE    ,
     INDENT_COMMENT  ,
+    SEPARATOR       ,
 ];
 
-pub const OP_TOKEN: [OpToken; 18] = [
+pub const OP_TOKEN: [OpToken; 19] = [
     OP_CALL         ,
     OP_TOWARD       ,
     OP_STRING       ,
@@ -286,4 +315,5 @@ pub const OP_TOKEN: [OpToken; 18] = [
     INDENT_TAB      ,
     INDENT_SPACE    ,
     INDENT_COMMENT  ,
+    SEPARATOR       ,
 ];

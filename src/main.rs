@@ -27,4 +27,6 @@ fn main() {
     "a -> b\n");
     mp::compile("/src/test2.mp",
     "a->b\n");
+    mp::compile("/src/separator.mp",
+    "a: b, c, d, e, -> f\n");
 }
