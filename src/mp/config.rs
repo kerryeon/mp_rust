@@ -10,26 +10,31 @@
         Date: 2019-01-04
 ------------------------------------------------------------ */
 
-const OP_CALL           : OpToken = OpToken::op             (":"     , 1);
-const OP_TOWARD         : OpToken = OpToken::op             ("->"    , 2);
-const OP_MATH           : OpToken = OpToken::op             ("$"     , 3);
-const OP_STRING         : OpToken = OpToken::op             ("%"     , 3);
-const OP_RAW            : OpToken = OpToken::op             ("!"     , 3);
-const OP_NULL           : OpToken = OpToken::op             ("?"     , 3);
+const OP_CALL           : OpToken = OpToken::op             (":"    , 1);
+const OP_TOWARD         : OpToken = OpToken::op             ("->"   , 2);
+const OP_STRING         : OpToken = OpToken::op             ("%"    , 3);
+const OP_RAW            : OpToken = OpToken::op             ("!"    , 3);
+const OP_NULL           : OpToken = OpToken::op             ("?"    , 8);
+const OP_ANY_MUL        : OpToken = OpToken::op             ("*"    , 8);
 
-const MACRO_AND         : OpToken = OpToken::op             ("AND"   , 6);
-const MACRO_OR          : OpToken = OpToken::op             ("OR"    , 5);
-const MACRO_NOT         : OpToken = OpToken::op             ("NOT"   , 7);
-const MACRO_IS          : OpToken = OpToken::op             ("IS"    , 4);
+const MACRO_AND         : OpToken = OpToken::op             ("AND"  , 6);
+const MACRO_OR          : OpToken = OpToken::op             ("OR"   , 5);
+const MACRO_NOT         : OpToken = OpToken::op             ("NOT"  , 7);
+const MACRO_IS          : OpToken = OpToken::op             ("IS"   , 4);
 
-const MACRO_DEF         : OpToken = OpToken::op             ("def"   , 1);
+const MACRO_DEF         : OpToken = OpToken::op             ("def"  , 1);
 
-const BPO               : OpToken = OpToken::shell_open     ("("     , 1);
-const BSO               : OpToken = OpToken::shell_open     ("["     , 2);
-const BBO               : OpToken = OpToken::shell_open     ("{"     , 3);
-const BPC               : OpToken = OpToken::shell_close    (")"     , 1);
-const BSC               : OpToken = OpToken::shell_close    ("]"     , 2);
-const BBC               : OpToken = OpToken::shell_close    ("}"     , 3);
+const OP_ADD            : OpToken = OpToken::op             ("+"    , 8);
+const OP_SUB            : OpToken = OpToken::op             ("-"    , 8);
+const OP_DIV            : OpToken = OpToken::op             ("/"    , 8);
+const OP_IDIV           : OpToken = OpToken::op             ("//"   , 8);
+
+const BPO               : OpToken = OpToken::shell_open     ("("    , 1);
+const BSO               : OpToken = OpToken::shell_open     ("["    , 2);
+const BBO               : OpToken = OpToken::shell_open     ("{"    , 3);
+const BPC               : OpToken = OpToken::shell_close    (")"    , 1);
+const BSC               : OpToken = OpToken::shell_close    ("]"    , 2);
+const BBC               : OpToken = OpToken::shell_close    ("}"    , 3);
 
 const INDENT_JUMP       : OpToken = OpToken::jump           ("\n"   );
 const INDENT_TAB        : OpToken = OpToken::indent         ("\t"   );
@@ -234,18 +239,22 @@ impl<'op> OpToken<'op> {
     }
 }
 
-pub const OP_ORDER: [OpToken; 21] = [
+pub const OP_ORDER: [OpToken; 25] = [
     OP_CALL         ,
     OP_TOWARD       ,
-    OP_MATH         ,
     OP_STRING       ,
     OP_RAW          ,
     OP_NULL         ,
+    OP_ANY_MUL      ,
     MACRO_AND       ,
     MACRO_OR        ,
     MACRO_NOT       ,
     MACRO_IS        ,
     MACRO_DEF       ,
+    OP_ADD          ,
+    OP_SUB          ,
+    OP_DIV          ,
+    OP_IDIV         ,
     BPO             ,
     BSO             ,
     BBO             ,
@@ -258,13 +267,15 @@ pub const OP_ORDER: [OpToken; 21] = [
     INDENT_COMMENT  ,
 ];
 
-pub const OP_TOKEN: [OpToken; 16] = [
+pub const OP_TOKEN: [OpToken; 18] = [
     OP_CALL         ,
     OP_TOWARD       ,
-    OP_MATH         ,
     OP_STRING       ,
     OP_RAW          ,
     OP_NULL         ,
+    OP_ANY_MUL      ,
+    OP_ADD          ,
+    OP_IDIV         ,
     BPO             ,
     BSO             ,
     BBO             ,

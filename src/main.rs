@@ -10,11 +10,21 @@
         Date: 2019-01-03
 ------------------------------------------------------------ */
 
+//mod console;
 mod mp;
 
 fn main() {
+    //let cmd = console::Console::new();
+    //cmd.begin_interactive();
+    //cmd.compile("./src/main.mp",
     mp::compile("./src/main.mp",
 "def Main: a -> b# comment
 \t\t\tPrint: hello ( world: (x->((y))))
 ");
+    mp::compile("/src/math.mp",
+    "c: a/b\n");
+    mp::compile("/src/test1.mp",
+    "a -> b\n");
+    mp::compile("/src/test2.mp",
+    "a->b\n");
 }
