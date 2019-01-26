@@ -87,7 +87,7 @@ impl<'nodes> Iterator for ASTLine<'nodes> {
     }
 }
 
-impl<'filename> AST<'filename> {
+impl<'path> AST<'path> {
 
     // Post-order
     pub fn traversal(&self) -> ASTTraversal {

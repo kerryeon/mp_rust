@@ -26,8 +26,8 @@ impl Console {
         }
     }
 
-    pub fn compile(&self, filename: &str, source: &str) {
-        mp::compile(filename, source)
+    pub fn compile(&self, path: &str, source: &str) {
+        mp::compile(path, source)
     }
 
     pub fn begin_interactive(&self) {
