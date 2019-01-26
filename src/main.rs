@@ -17,8 +17,8 @@ fn main() {
     //let cmd = console::Console::new();
     //cmd.begin_interactive();
     //cmd.compile("./src/main.mp",
-    mp::compile("./src/main.mp",
-"def Main: a -> b# comment
+    /*mp::compile("./src/main.mp",
+"Main: a -> b# comment
 \t\t\tPrint: hello ( world: (x->((y))))
 ");
     mp::compile("/src/math.mp",
@@ -26,7 +26,11 @@ fn main() {
     mp::compile("/src/test1.mp",
     "a -> b\n");
     mp::compile("/src/test2.mp",
-    "a->b\n");
+    "a -> b\n");
     mp::compile("/src/separator.mp",
     "a: b, c, d, e, -> f\n");
+    mp::compile("/src/foo_call.mp",
+    "Main:\n\tfoo: 3, 4\n");*/
+    mp::compile("/src/foo_call.mp",
+    "\tPrint! Format! x, y, z, w\n  ");
 }

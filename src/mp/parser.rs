@@ -60,13 +60,12 @@ impl Node {
         node.update(node_index, self.current, node_index)
     }
     fn insert_inline(&mut self, node: &mut Node) -> ASTQuery {
-        if self.config.is_indent {
-            self.config.is_indent = false;
-            self.token = node.token.clone();
+        if node.config.is_indent() {
+            self.config.indent += node.config.indent;
         } else {
             self.token = format!("{}{}", self.token, node.token).to_string();
             self.token_len = self.token.len();
-        };
+        }
         (self.current, false)
     }
 
@@ -76,27 +75,11 @@ impl Node {
         self.root = root;
         (current, true)
     }
-}
 
-enum ASTInsert {
-    Left,
-    LeftSwap,
-    Right,
-    RightRoot,
-    None,
-    Inline,
-    Remove,
-}
-type ASTQuery = (NodeNum, bool);
-
-pub struct AST<'filename> {
-    nodes: Vec<Node>,
-    now: usize,
-
-    row: usize,
-    col: usize,
-    filename: &'filename str,
-    is_comment: bool,
+    fn close_bracket(&mut self) -> ASTQuery {
+        self.config.is_shell_closed = true;
+        (self.current, true)
+    }
 }
 
 impl<'filename> AST<'filename> {
@@ -135,27 +118,12 @@ impl<'filename> AST<'filename> {
             ASTInsert::None         => (parent.current, false),
             ASTInsert::Inline       => parent.insert_inline(&mut node),
             ASTInsert::Remove       => self.remove(parent_index),
+            ASTInsert::CloseBracket => parent.close_bracket(),
         };
 
         self.now = node_index;
         if allow_join {
             self.nodes.push(node);
-        }
-    }
-
-    pub fn tree(&self) {
-        let root = &self.nodes[NIL];
-        self._tree(root, "Root", 0);
-    }
-
-    fn _tree(&self, node: &Node, tag: &str, depth: usize) {
-        for _ in 0..depth { print!("\t"); }
-        println!("[{}] {}", tag, node.token);
-        if node.left != NIL { self._tree(&self.nodes[node.left], "Left", depth+1); }
-        if node.right != NIL {
-            let child = &self.nodes[node.right];
-            if node.is_root() { self._tree(child, "Root", depth); }
-            else { self._tree(child, "Right", depth+1); }
         }
     }
 
@@ -201,10 +169,10 @@ impl<'filename> AST<'filename> {
         // 3. If parent is root
         if parent.is_root()
         {
-            return (parent.current, if node.config.is_indent { ASTInsert::Inline } else {ASTInsert::Left })
+            return (parent.current, if node.config.is_indent() { ASTInsert::Inline } else {ASTInsert::Left })
         }
         // 4. If child is indent
-        if node.config.is_indent {
+        if node.config.is_indent() {
             return (parent.current, if parent.config.is_op { ASTInsert::None } else { ASTInsert::Inline })
         }
         if !node.config.is_op {
@@ -219,11 +187,17 @@ impl<'filename> AST<'filename> {
         if node.config.is_shell_close() {
             while node.config.shell_close != parent.config.shell_open {
                 parent = &self.nodes[parent.parent];
+                if parent.config.is_shell_closed {
+                    continue
+                }
                 if parent.is_root() {
                     syntax::opening_bracket_not_found(self.filename, node)
                 }
             }
-            return (parent.current, ASTInsert::Remove)
+            if node.config.is_shell_removable() {
+                return (parent.current, ASTInsert::Remove)
+            }
+            return (parent.current, ASTInsert::CloseBracket)
         }
         // 9. If Child is OP
         loop {

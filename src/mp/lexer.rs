@@ -30,10 +30,10 @@ impl<'source> Tokenizer<'source> {
     fn new(source: &str) -> Tokenizer {
         Tokenizer {
             begin: 0,
-            end: 0,
+            end: 1,
             count: 0,
             has_op: false,
-            was_indent: false,
+            was_indent: true,
             return_first: false,
             source,
             chars: source.chars(),
@@ -96,6 +96,9 @@ impl<'source> Iterator for Tokenizer<'source> {
             self.count += 1;
 
             if Self::is_indent(c) {
+                if self.was_indent {
+                    return Some(self.slice_first())
+                }
                 self.was_indent = true;
                 self.return_first = true;
                 return Some(self.slice(false))
@@ -128,6 +131,6 @@ impl<'source> Iterator for Tokenizer<'source> {
     }
 }
 
-pub fn tokenize(source: &str) -> Tokenizer {
+pub fn generate(source: &str) -> Tokenizer {
     Tokenizer::new(source)
 }

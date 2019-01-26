@@ -13,14 +13,22 @@
 mod ast;
 mod config;
 mod error;
-mod token;
-mod tokenizer;
+mod lexer;
 mod parser;
+mod token;
 
 pub fn compile(filename: &str, source: &str) {
     let mut root = parser::new_ast(filename);
-    for token in tokenizer::tokenize(source) {
+    for token in lexer::generate(source) {
         root.attach(token);
     }
     root.tree();
+
+    let mut traversal = root.traversal();
+    while traversal.has_next_line {
+        println!("indents: {}", traversal.get_indents());
+        for node in traversal.next_line() {
+            println!("  token {}", node.token);
+        }
+    }
 }

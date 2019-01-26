@@ -10,50 +10,48 @@
         Date: 2019-01-04
 ------------------------------------------------------------ */
 
-const OP_CALL           : OpToken = OpToken::op             (":"    , 1);
-const OP_TOWARD         : OpToken = OpToken::op             ("->"   , 2);
-const OP_STRING         : OpToken = OpToken::op             ("%"    , 3);
-const OP_RAW            : OpToken = OpToken::op             ("!"    , 3);
-const OP_NULL           : OpToken = OpToken::op             ("?"    , 8);
-const OP_ANY_MUL        : OpToken = OpToken::op             ("*"    , 8);
+const OP_INPLACE        : OpToken = OpToken::op                 (":"    , 1);
+const OP_CALL           : OpToken = OpToken::op                 ("!"    , 2);
+const OP_TOWARD         : OpToken = OpToken::op                 ("->"   , 3);
+const OP_STRING         : OpToken = OpToken::op                 ("%"    , 4);
+const OP_ANY            : OpToken = OpToken::op                 ("?"    , 8);
 
-const MACRO_AND         : OpToken = OpToken::op             ("AND"  , 6);
-const MACRO_OR          : OpToken = OpToken::op             ("OR"   , 5);
-const MACRO_NOT         : OpToken = OpToken::op             ("NOT"  , 7);
-const MACRO_IS          : OpToken = OpToken::op             ("IS"   , 4);
+const OP_ADD            : OpToken = OpToken::op                 ("+"    , 8);
+const OP_SUB            : OpToken = OpToken::op                 ("-"    , 8);
+const OP_MUL            : OpToken = OpToken::op                 ("*"    , 8);
+const OP_DIV            : OpToken = OpToken::op                 ("/"    , 8);
+const OP_IDIV           : OpToken = OpToken::op                 ("//"   , 8);
 
-const MACRO_DEF         : OpToken = OpToken::op             ("def"  , 1);
+const BPO               : OpToken = OpToken::shell_open         ("("    , 1);
+const BSO               : OpToken = OpToken::shell_open         ("["    , 2);
+const BBO               : OpToken = OpToken::shell_open         ("{"    , 3);
+const BPC               : OpToken = OpToken::shell_close        (")"    , 1);
+const BSC               : OpToken = OpToken::shell_close        ("]"    , 2);
+const BBC               : OpToken = OpToken::shell_close        ("}"    , 3);
+const STRING            : OpToken = OpToken::shell_isomorphic   ("\""   , 4);
 
-const OP_ADD            : OpToken = OpToken::op             ("+"    , 8);
-const OP_SUB            : OpToken = OpToken::op             ("-"    , 8);
-const OP_DIV            : OpToken = OpToken::op             ("/"    , 8);
-const OP_IDIV           : OpToken = OpToken::op             ("//"   , 8);
-
-const BPO               : OpToken = OpToken::shell_open     ("("    , 1);
-const BSO               : OpToken = OpToken::shell_open     ("["    , 2);
-const BBO               : OpToken = OpToken::shell_open     ("{"    , 3);
-const BPC               : OpToken = OpToken::shell_close    (")"    , 1);
-const BSC               : OpToken = OpToken::shell_close    ("]"    , 2);
-const BBC               : OpToken = OpToken::shell_close    ("}"    , 3);
-
-const INDENT_JUMP       : OpToken = OpToken::jump           ("\n"   );
-const INDENT_TAB        : OpToken = OpToken::indent         ("\t"   );
-const INDENT_SPACE      : OpToken = OpToken::indent         (" "    );
-const INDENT_COMMENT    : OpToken = OpToken::comment        ("#"    );
-const SEPARATOR         : OpToken = OpToken::separator      (","    );
+const INDENT_JUMP       : OpToken = OpToken::jump               ("\n"   );
+const INDENT_TAB        : OpToken = OpToken::indent             ("\t"   , 4);
+const INDENT_SPACE      : OpToken = OpToken::indent             (" "    , 1);
+const INDENT_COMMENT    : OpToken = OpToken::comment            ("#"    );
+const SEPARATOR         : OpToken = OpToken::separator          (","    );
 
 pub type OpOrder = usize;
 const OP_ORDER_TOP: OpOrder = 0;
 const OP_ORDER_BOTTOM: OpOrder = 15;
 const NO_SHELL: usize = 0;
+const NO_INDENT: u8 = 0;
+
+const SHELL_REMOVABLE: usize = 1;
 
 pub struct OpConfig {
     pub order: OpOrder,
+    pub indent: u8,
     pub is_op: bool,
     pub is_separator: bool,
-    pub is_indent: bool,
     pub is_end: bool,
     pub is_comment: bool,
+    pub is_shell_closed: bool,
     pub shell_open: usize,
     pub shell_close: usize,
 }
@@ -61,21 +59,23 @@ pub struct OpConfig {
 impl OpConfig {
     const fn new(
         order: OpOrder,
+        indent: u8,
         is_op: bool,
         is_separator: bool,
-        is_indent: bool,
         is_end: bool,
         is_comment: bool,
+        is_shell_closed: bool,
         shell_open: usize,
         shell_close: usize,
     ) -> OpConfig {
         OpConfig {
             order,
+            indent,
             is_op,
             is_separator,
-            is_indent,
             is_end,
             is_comment,
+            is_shell_closed,
             shell_open,
             shell_close,
         }
@@ -84,11 +84,12 @@ impl OpConfig {
     pub const fn dummy() -> OpConfig {
         OpConfig::new(
             OP_ORDER_BOTTOM,
+            NO_INDENT,
             false,
             false,
             false,
             false,
-            false,
+            true,
             NO_SHELL,
             NO_SHELL,
         )
@@ -97,50 +98,59 @@ impl OpConfig {
     pub const fn clone(&self) -> OpConfig {
         OpConfig::new(
             self.order,
+            self.indent,
             self.is_op,
             self.is_separator,
-            self.is_indent,
             self.is_end,
             self.is_comment,
+            self.is_shell_closed,
             self.shell_open,
             self.shell_close,
         )
     }
 
+    pub const fn is_indent(&self) -> bool {
+        self.indent != NO_INDENT
+    }
     pub const fn is_shell_open(&self) -> bool {
         self.shell_open != NO_SHELL
     }
     pub const fn is_shell_close(&self) -> bool {
         self.shell_close != NO_SHELL
     }
+    pub const fn is_shell_removable(&self) -> bool {
+        self.shell_close == SHELL_REMOVABLE
+    }
 }
 
-pub struct OpToken<'op> {
-    pub token: &'op str,
+pub struct OpToken {
+    pub token: &'static str,
     pub config: OpConfig,
 }
 
-impl<'op> OpToken<'op> {
+impl OpToken {
     const fn new(
-        token: &'op str,
+        token: &'static str,
         order: OpOrder,
+        indent: u8,
         is_op: bool,
         is_separator: bool,
-        is_indent: bool,
         is_end: bool,
         is_comment: bool,
+        is_shell_closed: bool,
         shell_open: usize,
         shell_close: usize,
-    ) -> OpToken<'op> {
+    ) -> OpToken {
         OpToken {
             token,
             config: OpConfig::new(
                 order,
+                indent,
                 is_op,
                 is_separator,
-                is_indent,
                 is_end,
                 is_comment,
+                is_shell_closed,
                 shell_open,
                 shell_close,
             )
@@ -148,97 +158,102 @@ impl<'op> OpToken<'op> {
     }
 
     const fn op(
-        token: &'op str,
+        token: &'static str,
         order: OpOrder,
-    ) -> OpToken<'op> {
+    ) -> OpToken {
         OpToken::new(
             token,
             order,
+            NO_INDENT,
             true,
             false,
             false,
             false,
-            false,
+            true,
             NO_SHELL,
             NO_SHELL,
         )
     }
 
     const fn separator(
-        token: &'op str,
-    ) -> OpToken<'op> {
+        token: &'static str,
+    ) -> OpToken {
         OpToken::new(
             token,
             OP_ORDER_BOTTOM-1,
+            NO_INDENT,
             true,
             true,
             false,
             false,
-            false,
+            true,
             NO_SHELL,
             NO_SHELL,
         )
     }
 
     const fn no_op(
-        token: &'op str,
-        is_indent: bool,
+        token: &'static str,
+        indent: u8,
         is_end: bool,
         is_comment: bool,
-    ) -> OpToken<'op> {
+    ) -> OpToken {
         OpToken::new(
             token,
             OP_ORDER_BOTTOM,
+            indent,
             false,
             false,
-            is_indent,
             is_end,
             is_comment,
+            true,
             NO_SHELL,
             NO_SHELL,
         )
     }
 
     const fn indent(
-        token: &'op str,
-    ) -> OpToken<'op> {
+        token: &'static str,
+        indent: u8,
+    ) -> OpToken {
         OpToken::no_op(
             token,
-            true,
+            indent,
             false,
             false,
         )
     }
 
     const fn jump(
-        token: &'op str,
-    ) -> OpToken<'op> {
+        token: &'static str,
+    ) -> OpToken {
         OpToken::no_op(
             token,
-            false,
+            NO_INDENT,
             true,
             false,
         )
     }
 
     const fn comment(
-        token: &'op str,
-    ) -> OpToken<'op> {
+        token: &'static str,
+    ) -> OpToken {
         OpToken::no_op(
             token,
-            false,
+            NO_INDENT,
             false,
             true,
         )
     }
 
     const fn shell_open(
-        token: &'op str,
+        token: &'static str,
         map: usize,
-    ) -> OpToken<'op> {
+    ) -> OpToken {
         OpToken::new(
             token,
             OP_ORDER_TOP,
+            NO_INDENT,
             true,
             false,
             false,
@@ -250,37 +265,51 @@ impl<'op> OpToken<'op> {
     }
 
     const fn shell_close(
-        token: &'op str,
+        token: &'static str,
         map: usize,
-    ) -> OpToken<'op> {
+    ) -> OpToken {
         OpToken::new(
             token,
             OP_ORDER_BOTTOM,
+            NO_INDENT,
+            true,
+            false,
+            false,
+            false,
+            true,
+            NO_SHELL,
+            map,
+        )
+    }
+
+    const fn shell_isomorphic(
+        token: &'static str,
+        map: usize,
+    ) -> OpToken {
+        OpToken::new(
+            token,
+            OP_ORDER_BOTTOM,
+            NO_INDENT,
             true,
             false,
             false,
             false,
             false,
-            NO_SHELL,
+            map,
             map,
         )
     }
 }
 
-pub const OP_ORDER: [OpToken; 26] = [
+pub const OP_ORDER: [OpToken; 22] = [
+    OP_INPLACE      ,
     OP_CALL         ,
     OP_TOWARD       ,
     OP_STRING       ,
-    OP_RAW          ,
-    OP_NULL         ,
-    OP_ANY_MUL      ,
-    MACRO_AND       ,
-    MACRO_OR        ,
-    MACRO_NOT       ,
-    MACRO_IS        ,
-    MACRO_DEF       ,
+    OP_ANY          ,
     OP_ADD          ,
     OP_SUB          ,
+    OP_MUL          ,
     OP_DIV          ,
     OP_IDIV         ,
     BPO             ,
@@ -289,6 +318,7 @@ pub const OP_ORDER: [OpToken; 26] = [
     BPC             ,
     BSC             ,
     BBC             ,
+    STRING          ,
     INDENT_JUMP     ,
     INDENT_TAB      ,
     INDENT_SPACE    ,
@@ -296,14 +326,14 @@ pub const OP_ORDER: [OpToken; 26] = [
     SEPARATOR       ,
 ];
 
-pub const OP_TOKEN: [OpToken; 19] = [
+pub const OP_TOKEN: [OpToken; 20] = [
+    OP_INPLACE      ,
     OP_CALL         ,
     OP_TOWARD       ,
     OP_STRING       ,
-    OP_RAW          ,
-    OP_NULL         ,
-    OP_ANY_MUL      ,
+    OP_ANY          ,
     OP_ADD          ,
+    OP_MUL          ,
     OP_IDIV         ,
     BPO             ,
     BSO             ,
@@ -311,6 +341,7 @@ pub const OP_TOKEN: [OpToken; 19] = [
     BPC             ,
     BSC             ,
     BBC             ,
+    STRING          ,
     INDENT_JUMP     ,
     INDENT_TAB      ,
     INDENT_SPACE    ,

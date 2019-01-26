@@ -7,9 +7,11 @@
         Email: besqer996@gnu.ac.kr
         Github: !(https://github.com/kerryeon)
     Generated:
-        Date: 2019-01-08
+        Date: 2019-01-26
 ------------------------------------------------------------ */
 
+mod print;
+mod traversal;
 use crate::mp::config;
 
 pub type NodeNum = usize;
@@ -56,4 +58,26 @@ impl Node {
     pub const fn is_root(&self) -> bool {
         self.current == self.root
     }
+}
+
+pub enum ASTInsert {
+    Left,
+    LeftSwap,
+    Right,
+    RightRoot,
+    None,
+    Inline,
+    Remove,
+    CloseBracket,
+}
+pub type ASTQuery = (NodeNum, bool);
+
+pub struct AST<'filename> {
+    pub nodes: Vec<Node>,
+    pub now: usize,
+
+    pub row: usize,
+    pub col: usize,
+    pub filename: &'filename str,
+    pub is_comment: bool,
 }
