@@ -60,6 +60,10 @@ impl<'source> Tokenizer<'source> {
         c == ' ' || c == '\t' || c == '\n'
     }
 
+    fn is_useless(c: char) -> bool {
+        c == '\r'
+    }
+
     fn slice(&mut self, next_op: bool) -> token::Token {
         self.has_op = next_op;
 
@@ -94,6 +98,12 @@ impl<'source> Iterator for Tokenizer<'source> {
                 Some(c) => c,
             };
             self.count += 1;
+
+            if Self::is_useless(c) {
+                self.begin += 1;
+                self.end += 1;
+                continue
+            }
 
             if Self::is_indent(c) {
                 if self.was_indent {
