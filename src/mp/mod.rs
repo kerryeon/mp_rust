@@ -11,15 +11,25 @@
 ------------------------------------------------------------ */
 
 mod ast;
-mod config;
 mod error;
+mod io;
+
+mod config;
 mod lexer;
 mod parser;
 mod token;
 
-pub fn compile(filename: &str, source: &str) {
-    let mut root = parser::new_ast(filename);
-    for token in lexer::generate(source) {
+pub fn compile(path: &'static str) {
+    let source = match io::read_file(path) {
+        Ok(s) => s,
+        Err(e) => {
+            println!("err! {}", e);
+            return
+        }
+    };
+
+    let mut root = parser::new_ast(path);
+    for token in lexer::generate(source.as_str()) {
         root.attach(token);
     }
     root.tree();

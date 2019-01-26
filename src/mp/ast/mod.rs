@@ -72,12 +72,12 @@ pub enum ASTInsert {
 }
 pub type ASTQuery = (NodeNum, bool);
 
-pub struct AST<'filename> {
+pub struct AST<'path> {
     pub nodes: Vec<Node>,
     pub now: usize,
 
     pub row: usize,
     pub col: usize,
-    pub filename: &'filename str,
+    pub path: &'path str,
     pub is_comment: bool,
 }

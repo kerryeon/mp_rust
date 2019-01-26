@@ -7,12 +7,15 @@
         Email: besqer996@gnu.ac.kr
         Github: !(https://github.com/kerryeon)
     Generated:
-        Date: 2019-01-03
+        Date: 2019-01-27
 ------------------------------------------------------------ */
 
-//mod console;
-mod mp;
+use std::fs::File;
+use std::io::prelude::*;
 
-fn main() {
-    mp::compile("a.mp");
+pub fn read_file(path: &'static str) -> std::io::Result<String> {
+    let mut file = File::open(path)?;
+    let mut buf = String::new();
+    file.read_to_string(&mut buf)?;
+    Ok(buf)
 }

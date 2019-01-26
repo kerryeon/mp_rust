@@ -28,9 +28,9 @@ impl Node {
         node
     }
 
-    fn insert_left(&mut self, node: &mut Node, node_index: NodeNum, filename: &str) -> ASTQuery {
+    fn insert_left(&mut self, node: &mut Node, node_index: NodeNum, path: &str) -> ASTQuery {
         if self.left != NIL {
-            syntax::inappropriate_token(filename, node)
+            syntax::inappropriate_token(path, node)
         }
         self.left = node_index;
         node.update(node_index, self.current, self.root)
@@ -47,9 +47,9 @@ impl Node {
         }
         (node_index, true)
     }
-    fn insert_right(&mut self, node: &mut Node, node_index: NodeNum, filename: &str) -> ASTQuery {
+    fn insert_right(&mut self, node: &mut Node, node_index: NodeNum, path: &str) -> ASTQuery {
         if self.right != NIL {
-            syntax::inappropriate_token(filename, node)
+            syntax::inappropriate_token(path, node)
         }
         self.right = node_index;
         node.update(node_index, self.current, self.root)
@@ -82,8 +82,8 @@ impl Node {
     }
 }
 
-impl<'filename> AST<'filename> {
-    fn new(filename: &'filename str) -> AST<'filename> {
+impl<'path> AST<'path> {
+    fn new(path: &'path str) -> AST<'path> {
         let node = Node::root();
         let mut nodes = Vec::new();
         nodes.push(node);
@@ -92,7 +92,7 @@ impl<'filename> AST<'filename> {
             now: NIL,
             row: OFFSET_ROW,
             col: OFFSET_COL,
-            filename,
+            path,
             is_comment: false,
         }
     }
@@ -111,9 +111,9 @@ impl<'filename> AST<'filename> {
         let (parent_index, insert) = self.get_position(&node);
         let parent = &mut self.nodes[parent_index];
         let (node_index, allow_join) = match insert {
-            ASTInsert::Left         => parent.insert_left(&mut node, node_index, self.filename),
+            ASTInsert::Left         => parent.insert_left(&mut node, node_index, self.path),
             ASTInsert::LeftSwap     => self.insert_left_swap(&mut node, node_index, parent_index),
-            ASTInsert::Right        => parent.insert_right(&mut node, node_index, self.filename),
+            ASTInsert::Right        => parent.insert_right(&mut node, node_index, self.path),
             ASTInsert::RightRoot    => parent.insert_right_root(&mut node, node_index),
             ASTInsert::None         => (parent.current, false),
             ASTInsert::Inline       => parent.insert_inline(&mut node),
@@ -143,7 +143,7 @@ impl<'filename> AST<'filename> {
 
         if child_left_index != NIL {
             let child = &mut self.nodes[child_left_index];
-            syntax::inappropriate_token(self.filename, child)
+            syntax::inappropriate_token(self.path, child)
         }
         if child_right_index != NIL {
             let child = &mut self.nodes[child_right_index];
@@ -169,7 +169,7 @@ impl<'filename> AST<'filename> {
         // 3. If parent is root
         if parent.is_root()
         {
-            return (parent.current, if node.config.is_indent() { ASTInsert::Inline } else {ASTInsert::Left })
+            return (parent.current, if node.config.is_indent() { ASTInsert::Inline } else { ASTInsert::Left })
         }
         // 4. If child is indent
         if node.config.is_indent() {
@@ -191,7 +191,7 @@ impl<'filename> AST<'filename> {
                     continue
                 }
                 if parent.is_root() {
-                    syntax::opening_bracket_not_found(self.filename, node)
+                    syntax::opening_bracket_not_found(self.path, node)
                 }
             }
             if node.config.is_shell_removable() {
@@ -199,16 +199,40 @@ impl<'filename> AST<'filename> {
             }
             return (parent.current, ASTInsert::CloseBracket)
         }
+        // 9. If Child is Separator
+        if node.config.is_separator {
+            loop {
+                if parent.is_root() {
+                    syntax::inappropriate_token(self.path, node)
+                }
+                if parent.config.is_op { break }
+                parent = &self.nodes[parent.parent];
+            }
+            return match parent.config.is_op_prime {
+                true => {
+                    if parent.right == NIL {
+                        syntax::inappropriate_token(self.path, node)
+                    }
+                    (parent.right, ASTInsert::LeftSwap)
+                },
+                false => (parent.current, ASTInsert::LeftSwap),
+            }
+        }
         // 9. If Child is OP
+        let mut is_upper = false;
         loop {
             if parent.is_root() { return (parent.left, ASTInsert::LeftSwap) }
             if node.config.order >= parent.config.order { break }
             parent = &self.nodes[parent.parent];
+            is_upper = true;
         }
-        (parent.right, ASTInsert::LeftSwap)
+        match is_upper {
+            true => (parent.right, ASTInsert::LeftSwap),
+            false => (parent.current, ASTInsert::Right),
+        }
     }
 }
 
-pub fn new_ast(filename: &str) -> AST {
-    AST::new(filename)
+pub fn new_ast(path: &str) -> AST {
+    AST::new(path)
 }

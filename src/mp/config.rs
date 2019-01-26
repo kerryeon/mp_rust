@@ -10,11 +10,11 @@
         Date: 2019-01-04
 ------------------------------------------------------------ */
 
-const OP_INPLACE        : OpToken = OpToken::op                 (":"    , 1);
-const OP_CALL           : OpToken = OpToken::op                 ("!"    , 2);
-const OP_TOWARD         : OpToken = OpToken::op                 ("->"   , 3);
-const OP_STRING         : OpToken = OpToken::op                 ("%"    , 4);
-const OP_ANY            : OpToken = OpToken::op                 ("?"    , 8);
+const OP_INPLACE        : OpToken = OpToken::op_prime           (":"    , 1);
+const OP_CALL           : OpToken = OpToken::op_prime           ("!"    , 2);
+const OP_TOWARD         : OpToken = OpToken::op_prime           ("->"   , 3);
+const OP_STRING         : OpToken = OpToken::op_prime           ("%"    , 4);
+const OP_ANY            : OpToken = OpToken::op                 ("?"    , 14);
 
 const OP_ADD            : OpToken = OpToken::op                 ("+"    , 8);
 const OP_SUB            : OpToken = OpToken::op                 ("-"    , 8);
@@ -36,7 +36,7 @@ const INDENT_SPACE      : OpToken = OpToken::indent             (" "    , 1);
 const INDENT_COMMENT    : OpToken = OpToken::comment            ("#"    );
 const SEPARATOR         : OpToken = OpToken::separator          (","    );
 
-pub type OpOrder = usize;
+pub type OpOrder = u8;
 const OP_ORDER_TOP: OpOrder = 0;
 const OP_ORDER_BOTTOM: OpOrder = 15;
 const NO_SHELL: usize = 0;
@@ -48,6 +48,7 @@ pub struct OpConfig {
     pub order: OpOrder,
     pub indent: u8,
     pub is_op: bool,
+    pub is_op_prime: bool,
     pub is_separator: bool,
     pub is_end: bool,
     pub is_comment: bool,
@@ -61,6 +62,7 @@ impl OpConfig {
         order: OpOrder,
         indent: u8,
         is_op: bool,
+        is_op_prime: bool,
         is_separator: bool,
         is_end: bool,
         is_comment: bool,
@@ -72,6 +74,7 @@ impl OpConfig {
             order,
             indent,
             is_op,
+            is_op_prime,
             is_separator,
             is_end,
             is_comment,
@@ -89,6 +92,7 @@ impl OpConfig {
             false,
             false,
             false,
+            false,
             true,
             NO_SHELL,
             NO_SHELL,
@@ -100,6 +104,7 @@ impl OpConfig {
             self.order,
             self.indent,
             self.is_op,
+            self.is_op_prime,
             self.is_separator,
             self.is_end,
             self.is_comment,
@@ -134,6 +139,7 @@ impl OpToken {
         order: OpOrder,
         indent: u8,
         is_op: bool,
+        is_op_prime: bool,
         is_separator: bool,
         is_end: bool,
         is_comment: bool,
@@ -147,6 +153,7 @@ impl OpToken {
                 order,
                 indent,
                 is_op,
+                is_op_prime,
                 is_separator,
                 is_end,
                 is_comment,
@@ -169,6 +176,26 @@ impl OpToken {
             false,
             false,
             false,
+            false,
+            true,
+            NO_SHELL,
+            NO_SHELL,
+        )
+    }
+
+    const fn op_prime(
+        token: &'static str,
+        order: OpOrder,
+    ) -> OpToken {
+        OpToken::new(
+            token,
+            order,
+            NO_INDENT,
+            true,
+            true,
+            false,
+            false,
+            false,
             true,
             NO_SHELL,
             NO_SHELL,
@@ -180,8 +207,9 @@ impl OpToken {
     ) -> OpToken {
         OpToken::new(
             token,
-            OP_ORDER_BOTTOM-1,
+            OP_ORDER_TOP,
             NO_INDENT,
+            true,
             true,
             true,
             false,
@@ -202,6 +230,7 @@ impl OpToken {
             token,
             OP_ORDER_BOTTOM,
             indent,
+            false,
             false,
             false,
             is_end,
@@ -259,6 +288,7 @@ impl OpToken {
             false,
             false,
             false,
+            false,
             map,
             NO_SHELL,
         )
@@ -273,6 +303,7 @@ impl OpToken {
             OP_ORDER_BOTTOM,
             NO_INDENT,
             true,
+            false,
             false,
             false,
             false,
@@ -291,6 +322,7 @@ impl OpToken {
             OP_ORDER_BOTTOM,
             NO_INDENT,
             true,
+            false,
             false,
             false,
             false,

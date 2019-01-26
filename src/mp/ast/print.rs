@@ -12,7 +12,7 @@
 
 use crate::mp::ast::*;
 
-impl<'filename> AST<'filename> {
+impl<'path> AST<'path> {
     pub fn tree(&self) {
         let root = &self.nodes[NIL];
         self._tree(root, "Root", 0);
@@ -20,7 +20,7 @@ impl<'filename> AST<'filename> {
 
     fn _tree(&self, node: &Node, tag: &str, depth: usize) {
         for _ in 0..depth { print!("\t"); }
-        if node.config.is_indent() {
+        if node.is_root() {
             println!("[{}] {} indents", tag, node.config.indent)
         } else {
             println!("[{}] {}", tag, node.token)
