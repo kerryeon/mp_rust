@@ -28,7 +28,7 @@ const BBO               : OpToken = OpToken::shell_open         ("{"    , 3);
 const BPC               : OpToken = OpToken::shell_close        (")"    , 1);
 const BSC               : OpToken = OpToken::shell_close        ("]"    , 2);
 const BBC               : OpToken = OpToken::shell_close        ("}"    , 3);
-const STRING            : OpToken = OpToken::shell_isomorphic   ("\""   , 4);
+const STRING            : OpToken = OpToken::shell_string       ("\""   , 4);
 
 const INDENT_JUMP       : OpToken = OpToken::jump               ("\n"   );
 const INDENT_TAB        : OpToken = OpToken::indent             ("\t"   , 4);
@@ -36,39 +36,53 @@ const INDENT_SPACE      : OpToken = OpToken::indent             (" "    , 1);
 const INDENT_COMMENT    : OpToken = OpToken::comment            ("#"    );
 const SEPARATOR         : OpToken = OpToken::separator          (","    );
 
+const MAGIC_STRING      : OpToken = OpToken::magic_code         ("\\\"" , MAGIC_CODE_STRING);
+const MAGIC_TAB         : OpToken = OpToken::magic_code         ("\\t"  , MAGIC_CODE_TAB);
+
 pub type OpOrder = u8;
+pub type NumIndent = u8;
+pub type ShellMap = u8;
+pub type MagicMap = u8;
 const OP_ORDER_TOP: OpOrder = 0;
 const OP_ORDER_BOTTOM: OpOrder = 15;
-const NO_SHELL: usize = 0;
-const NO_INDENT: u8 = 0;
+const NO_SHELL: ShellMap = 0;
+const NO_INDENT: NumIndent = 0;
 
-const SHELL_REMOVABLE: usize = 1;
+const MAGIC_CODE_NONE       : MagicMap = 0;
+pub const MAGIC_CODE_STRING : MagicMap = 1;
+pub const MAGIC_CODE_TAB    : MagicMap = 2;
+
+const SHELL_REMOVABLE: ShellMap = 1;
 
 pub struct OpConfig {
     pub order: OpOrder,
-    pub indent: u8,
+    pub indent: NumIndent,
     pub is_op: bool,
     pub is_op_prime: bool,
     pub is_separator: bool,
     pub is_end: bool,
+    pub is_string: bool,
     pub is_comment: bool,
     pub is_shell_closed: bool,
-    pub shell_open: usize,
-    pub shell_close: usize,
+    pub shell_open: ShellMap,
+    pub shell_close: ShellMap,
+    pub magic_code: MagicMap,
 }
 
 impl OpConfig {
     const fn new(
         order: OpOrder,
-        indent: u8,
+        indent: NumIndent,
         is_op: bool,
         is_op_prime: bool,
         is_separator: bool,
         is_end: bool,
+        is_string: bool,
         is_comment: bool,
         is_shell_closed: bool,
-        shell_open: usize,
-        shell_close: usize,
+        shell_open: ShellMap,
+        shell_close: ShellMap,
+        magic_code: MagicMap,
     ) -> OpConfig {
         OpConfig {
             order,
@@ -77,10 +91,12 @@ impl OpConfig {
             is_op_prime,
             is_separator,
             is_end,
+            is_string,
             is_comment,
             is_shell_closed,
             shell_open,
             shell_close,
+            magic_code,
         }
     }
 
@@ -93,9 +109,11 @@ impl OpConfig {
             false,
             false,
             false,
+            false,
             true,
             NO_SHELL,
             NO_SHELL,
+            MAGIC_CODE_NONE,
         )
     }
 
@@ -107,10 +125,12 @@ impl OpConfig {
             self.is_op_prime,
             self.is_separator,
             self.is_end,
+            self.is_string,
             self.is_comment,
             self.is_shell_closed,
             self.shell_open,
             self.shell_close,
+            self.magic_code,
         )
     }
 
@@ -137,15 +157,17 @@ impl OpToken {
     const fn new(
         token: &'static str,
         order: OpOrder,
-        indent: u8,
+        indent: NumIndent,
         is_op: bool,
         is_op_prime: bool,
         is_separator: bool,
         is_end: bool,
+        is_string: bool,
         is_comment: bool,
         is_shell_closed: bool,
-        shell_open: usize,
-        shell_close: usize,
+        shell_open: ShellMap,
+        shell_close: ShellMap,
+        magic_code: MagicMap,
     ) -> OpToken {
         OpToken {
             token,
@@ -156,10 +178,12 @@ impl OpToken {
                 is_op_prime,
                 is_separator,
                 is_end,
+                is_string,
                 is_comment,
                 is_shell_closed,
                 shell_open,
                 shell_close,
+                magic_code,
             )
         }
     }
@@ -177,9 +201,11 @@ impl OpToken {
             false,
             false,
             false,
+            false,
             true,
             NO_SHELL,
             NO_SHELL,
+            MAGIC_CODE_NONE,
         )
     }
 
@@ -196,9 +222,11 @@ impl OpToken {
             false,
             false,
             false,
+            false,
             true,
             NO_SHELL,
             NO_SHELL,
+            MAGIC_CODE_NONE,
         )
     }
 
@@ -214,15 +242,17 @@ impl OpToken {
             true,
             false,
             false,
+            false,
             true,
             NO_SHELL,
             NO_SHELL,
+            MAGIC_CODE_NONE,
         )
     }
 
     const fn no_op(
         token: &'static str,
-        indent: u8,
+        indent: NumIndent,
         is_end: bool,
         is_comment: bool,
     ) -> OpToken {
@@ -234,16 +264,18 @@ impl OpToken {
             false,
             false,
             is_end,
+            false,
             is_comment,
             true,
             NO_SHELL,
             NO_SHELL,
+            MAGIC_CODE_NONE,
         )
     }
 
     const fn indent(
         token: &'static str,
-        indent: u8,
+        indent: NumIndent,
     ) -> OpToken {
         OpToken::no_op(
             token,
@@ -277,7 +309,7 @@ impl OpToken {
 
     const fn shell_open(
         token: &'static str,
-        map: usize,
+        map: ShellMap,
     ) -> OpToken {
         OpToken::new(
             token,
@@ -289,20 +321,44 @@ impl OpToken {
             false,
             false,
             false,
+            false,
             map,
             NO_SHELL,
+            MAGIC_CODE_NONE,
+        )
+    }
+
+    const fn shell_string(
+        token: &'static str,
+        map: ShellMap,
+    ) -> OpToken {
+        OpToken::new(
+            token,
+            OP_ORDER_BOTTOM,
+            NO_INDENT,
+            true,
+            false,
+            false,
+            false,
+            true,
+            false,
+            false,
+            map,
+            map,
+            MAGIC_CODE_NONE,
         )
     }
 
     const fn shell_close(
         token: &'static str,
-        map: usize,
+        map: ShellMap,
     ) -> OpToken {
         OpToken::new(
             token,
             OP_ORDER_BOTTOM,
             NO_INDENT,
             true,
+            false,
             false,
             false,
             false,
@@ -310,30 +366,33 @@ impl OpToken {
             true,
             NO_SHELL,
             map,
+            MAGIC_CODE_NONE,
         )
     }
 
-    const fn shell_isomorphic(
+    const fn magic_code(
         token: &'static str,
-        map: usize,
+        magic_code: MagicMap,
     ) -> OpToken {
         OpToken::new(
             token,
             OP_ORDER_BOTTOM,
             NO_INDENT,
-            true,
             false,
             false,
             false,
             false,
             false,
-            map,
-            map,
+            false,
+            false,
+            NO_SHELL,
+            NO_SHELL,
+            magic_code,
         )
     }
 }
 
-pub const OP_ORDER: [OpToken; 22] = [
+pub const OP_ORDER: [OpToken; 24] = [
     OP_INPLACE      ,
     OP_CALL         ,
     OP_TOWARD       ,
@@ -356,6 +415,8 @@ pub const OP_ORDER: [OpToken; 22] = [
     INDENT_SPACE    ,
     INDENT_COMMENT  ,
     SEPARATOR       ,
+    MAGIC_STRING    ,
+    MAGIC_TAB       ,
 ];
 
 pub const OP_TOKEN: [OpToken; 20] = [

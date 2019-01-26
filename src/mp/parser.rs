@@ -54,18 +54,32 @@ impl Node {
         self.right = node_index;
         node.update(node_index, self.current, self.root)
     }
+    fn open_bracket(&mut self, node: &mut Node, node_index: NodeNum, path: &str) -> ASTQuery {
+        node.token.clear();
+        self.insert_right(node, node_index, path)
+    }
     fn insert_right_root(&mut self, node: &mut Node, node_index: NodeNum) -> ASTQuery {
         self.right = node_index;
         node.token = String::new();
         node.update(node_index, self.current, node_index)
     }
+
     fn insert_inline(&mut self, node: &mut Node) -> ASTQuery {
         if node.config.is_indent() {
             self.config.indent += node.config.indent;
+            (self.current, false)
         } else {
-            self.token = format!("{}{}", self.token, node.token).to_string();
-            self.token_len = self.token.len();
+            self.insert_inline_force(node)
         }
+    }
+    fn insert_inline_force(&mut self, node: &mut Node) -> ASTQuery {
+        match node.config.magic_code {
+            config::MAGIC_CODE_STRING => node.token = String::from("\""),
+            config::MAGIC_CODE_TAB => node.token = String::from("\t"),
+            _ => {},
+        }
+        self.token = format!("{}{}", self.token, node.token).to_string();
+        self.token_len = self.token.len();
         (self.current, false)
     }
 
@@ -117,7 +131,9 @@ impl<'path> AST<'path> {
             ASTInsert::RightRoot    => parent.insert_right_root(&mut node, node_index),
             ASTInsert::None         => (parent.current, false),
             ASTInsert::Inline       => parent.insert_inline(&mut node),
+            ASTInsert::InlineForce  => parent.insert_inline_force(&mut node),
             ASTInsert::Remove       => self.remove(parent_index),
+            ASTInsert::OpenBracket  => parent.open_bracket(&mut node, node_index, self.path),
             ASTInsert::CloseBracket => parent.close_bracket(),
         };
 
@@ -156,34 +172,41 @@ impl<'path> AST<'path> {
 
     fn get_position(&mut self, node: &Node) -> (NodeNum, ASTInsert) {
         let mut parent = &self.nodes[self.now];
-        // 1. is \n
+        // 1. If parent is String
+        if parent.config.is_string && ! parent.config.is_shell_closed {
+            if parent.config.is_string && node.config.is_shell_close() {
+                return (parent.current, ASTInsert::CloseBracket)
+            }
+            return (parent.current, ASTInsert::InlineForce)
+        }
+        // 2. is \n
         if node.config.is_end {
             self.is_comment = false;
             return (parent.root, ASTInsert::RightRoot)
         }
-        // 2. is comment
+        // 3. is comment
         if node.config.is_comment || self.is_comment {
             self.is_comment = true;
             return (parent.current, ASTInsert::None)
         }
-        // 3. If parent is root
+        // 4. If parent is root
         if parent.is_root()
         {
             return (parent.current, if node.config.is_indent() { ASTInsert::Inline } else { ASTInsert::Left })
         }
-        // 4. If child is indent
+        // 5. If child is indent
         if node.config.is_indent() {
             return (parent.current, if parent.config.is_op { ASTInsert::None } else { ASTInsert::Inline })
         }
         if !node.config.is_op {
-            // 5. If Parent isn't OP & Child isn't OP
+            // 6. If Parent isn't OP & Child isn't OP
             if !parent.config.is_op { return (parent.current, ASTInsert::Inline) }
-            // 6. If Parent is    OP & Child isn't OP
+            // 7. If Parent is    OP & Child isn't OP
             return (parent.current, ASTInsert::Right)
         }
-        // 7. If Child is Opening Bracket
-        if node.config.is_shell_open() { return (parent.current, ASTInsert::Right) }
-        // 8. If Child is Closing Bracket
+        // 8. If Child is Opening Bracket
+        if node.config.is_shell_open() { return (parent.current, ASTInsert::OpenBracket) }
+        // 9. If Child is Closing Bracket
         if node.config.is_shell_close() {
             while node.config.shell_close != parent.config.shell_open {
                 parent = &self.nodes[parent.parent];
@@ -199,7 +222,7 @@ impl<'path> AST<'path> {
             }
             return (parent.current, ASTInsert::CloseBracket)
         }
-        // 9. If Child is Separator
+        // 10. If Child is Separator
         if node.config.is_separator {
             loop {
                 if parent.is_root() {
@@ -218,7 +241,7 @@ impl<'path> AST<'path> {
                 false => (parent.current, ASTInsert::LeftSwap),
             }
         }
-        // 9. If Child is OP
+        // 11. If Child is OP
         let mut is_upper = false;
         loop {
             if parent.is_root() { return (parent.left, ASTInsert::LeftSwap) }

@@ -67,7 +67,9 @@ pub enum ASTInsert {
     RightRoot,
     None,
     Inline,
+    InlineForce,
     Remove,
+    OpenBracket,
     CloseBracket,
 }
 pub type ASTQuery = (NodeNum, bool);

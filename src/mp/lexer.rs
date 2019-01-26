@@ -21,6 +21,7 @@ pub struct Tokenizer<'source> {
     count: usize,
     has_op: bool,
     was_indent: bool,
+    is_magic_char: bool,
     return_first: bool,
     source: &'source str,
     chars: Chars<'source>,
@@ -34,6 +35,7 @@ impl<'source> Tokenizer<'source> {
             count: 0,
             has_op: false,
             was_indent: true,
+            is_magic_char: false,
             return_first: false,
             source,
             chars: source.chars(),
@@ -52,8 +54,13 @@ impl<'source> Tokenizer<'source> {
         c == '.' || c == '_'
     }
 
+    fn is_magic_char(c: char) -> bool {
+        c == '\\'
+    }
+
     fn is_char(c: char) -> bool {
-        Self::is_numeric(c) || Self::is_alphabet(c) || Self::is_special_char(c)
+        Self::is_numeric(c) || Self::is_alphabet(c) ||
+            Self::is_special_char(c) || Self::is_magic_char(c)
     }
 
     fn is_indent(c: char) -> bool {
@@ -104,6 +111,15 @@ impl<'source> Iterator for Tokenizer<'source> {
                 self.end += 1;
                 continue
             }
+
+            if self.is_magic_char {
+                if c == '"' {
+                    self.return_first = true;
+                    self.end += 1;
+                    continue
+                }
+            }
+            self.is_magic_char = Self::is_magic_char(c);
 
             if Self::is_indent(c) {
                 if self.was_indent {
