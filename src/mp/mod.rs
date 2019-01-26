@@ -38,7 +38,11 @@ pub fn compile(path: &'static str) {
     while traversal.has_next_line {
         println!("indents: {}", traversal.get_indents());
         for node in traversal.next_line() {
-            println!("  token {}", node.token);
+            if node.config.is_string {
+                println!("  string [{}]", node.token);
+            } else {
+                println!("  token {}", node.token);
+            }
         }
     }
 }

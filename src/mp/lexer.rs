@@ -113,13 +113,15 @@ impl<'source> Iterator for Tokenizer<'source> {
             }
 
             if self.is_magic_char {
-                if c == '"' {
-                    self.return_first = true;
-                    self.end += 1;
-                    continue
-                }
+                self.is_magic_char = false;
+                self.has_op = true;
+                self.end += 1;
+                continue
             }
             self.is_magic_char = Self::is_magic_char(c);
+            if self.is_magic_char {
+                self.has_op = !self.was_indent;
+            }
 
             if Self::is_indent(c) {
                 if self.was_indent {

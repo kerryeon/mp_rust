@@ -419,7 +419,7 @@ pub const OP_ORDER: [OpToken; 24] = [
     MAGIC_TAB       ,
 ];
 
-pub const OP_TOKEN: [OpToken; 20] = [
+pub const OP_TOKEN: [OpToken; 22] = [
     OP_INPLACE      ,
     OP_CALL         ,
     OP_TOWARD       ,
@@ -440,4 +440,6 @@ pub const OP_TOKEN: [OpToken; 20] = [
     INDENT_SPACE    ,
     INDENT_COMMENT  ,
     SEPARATOR       ,
+    MAGIC_STRING    ,
+    MAGIC_TAB       ,
 ];
