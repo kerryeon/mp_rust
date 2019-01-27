@@ -25,8 +25,8 @@ Factorial[]: x -> z
     z: match! x <= 1
         yes: 1
         no:
-            Factorial! x-1 -> y
-            z: x * y
+            Factorial! (x-1) -> y
+            x * y
 
 Main:
     5 -> ?:
