@@ -1,7 +1,7 @@
 # Machine Pseudo-Code
 ```
 Main:
-    Print: hello world
+    Print! "hello world"
 ```
 `Machine Pseudo-Code` (이하 `MP`)는 알고리즘을 더욱 쉽게 기술하기 위한
 `범용 프로그래밍 언어`입니다.
@@ -17,59 +17,57 @@ Main:
 * 프로토타입 기반 프로그래밍 지원: 함수는 선언을 통해 객체가 될 수 있고, 상속이 가능합니다.
 * 소유권 기반 프로그래밍 지원: `Rust`의 소유자 개념을 도입했습니다.
     * 인터프리터임에도 불구하고, `GC` 없이 메모리를 안전하게 관리할 수 있습니다.
-* 문자열 기반 프로그래밍 지원: 변수명과 문자열, 파일명은 일대일 대응됩니다.
-    * 많은 경우 인터프리터가 스스로 구분합니다.
 
 ## 예시
 1. 팩토리얼 계산
 ```
-def Factorial: x -> z
-    If: $(x <= 1)
-        z: 1
-    Else:
-        Factorial: $(x-1) -> y
-        z: $(x * y)
+Factorial[]: x -> z
+    z: match! x <= 1
+        yes: 1
+        no:
+            Factorial! x-1 -> y
+            z: x * y
 
-def Main:
+Main:
     5 -> ?:
-        Factorial:
-        Print:
+        Factorial!
+        Print!
 
 ```
 2. `LeNet`
 ```
-Config:
-    Using: Deep learning
-    platform: PyTorch  # Tensorflow, CNTK, ...
+Using[]:
+    Deep learning:
+        platform: PyTorch  # Tensorflow, CNTK, ...
 
-def My Convolution: Convolution 2D
+My Convolution: Convolution 2D
     kernel size: 5, 5
     padding: 2, 2
 
-def My Pooling: Max Pooling 2D
+My Pooling: Max Pooling 2D
     kernel size: 2, 2
 
-def LeNet: x -> x
-    My Convolution:
+LeNet: x -> x
+    My Convolution!
         channel: 1, 32
-    My Pooling:
-    ReLU:
-    My Convolution:
+    My Pooling!
+    ReLU!
+    My Convolution!
         channel: 32, 64
-    My Pooling:
-    ReLU:
-    Transform:
+    My Pooling!
+    ReLU!
+    Transform!
         dim: ?, $(64 * 7 * 7)
-    Dense:
+    Dense!
         dim in: ?, $(64 * 7 * 7)
         dim out: ?, 1024
-    ReLU:
-    Dense:
+    ReLU!
+    Dense!
         dim in: ?, 1024
         dim out: ?, 10
-    LogSoftmax:
+    LogSoftmax!
 
-def Main:
+Main:
     model: LeNet
     ...
 
