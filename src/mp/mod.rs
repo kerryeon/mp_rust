@@ -36,6 +36,7 @@ pub fn compile(path: &'static str) {
 
     let mut traversal = root.traversal();
     while traversal.has_next_line {
+        println!("indents: {}", traversal.get_indents());
         for node in traversal.next_line() {
             if node.config.is_string {
                 println!("  string [{}]", node.token);

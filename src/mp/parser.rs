@@ -171,7 +171,6 @@ impl<'path> AST<'path> {
     }
 
     fn get_position(&mut self, node: &Node) -> (NodeNum, ASTInsert) {
-        println!("token [{}]", node.token);
         let mut parent = &self.nodes[self.now];
         // 1. If parent is String
         if parent.config.is_string && ! parent.config.is_shell_closed {
