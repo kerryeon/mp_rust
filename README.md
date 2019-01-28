@@ -57,9 +57,9 @@ LeNet: x -> x
     My Pooling!
     ReLU!
     Transform!
-        dim: ?, $(64 * 7 * 7)
+        dim: ?, (64 * 7 * 7)
     Dense!
-        dim in: ?, $(64 * 7 * 7)
+        dim in: ?, (64 * 7 * 7)
         dim out: ?, 1024
     ReLU!
     Dense!

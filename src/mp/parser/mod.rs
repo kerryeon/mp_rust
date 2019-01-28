@@ -7,14 +7,85 @@
         Email: besqer996@gnu.ac.kr
         Github: !(https://github.com/kerryeon)
     Generated:
-        Date: 2019-01-05
+        Date: 2019-01-26
 ------------------------------------------------------------ */
 
-use crate::mp::ast::*;
+mod print;
+mod traversal;
+
 use crate::mp::config;
+use crate::mp::error::syntax;
 use crate::mp::token::Token;
 
-use crate::mp::error::syntax;
+pub type NodeNum = usize;
+
+pub const NIL: NodeNum = 0;
+pub const OFFSET_ROW: usize = 1;
+pub const OFFSET_COL: usize = 1;
+
+pub struct Node {
+    pub token: String,
+    pub token_len: usize,
+    pub left: NodeNum,
+    pub right: NodeNum,
+    pub current: NodeNum,
+    pub parent: NodeNum,
+    pub root: NodeNum,
+    pub config: config::OpConfig,
+
+    pub row: usize,
+    pub col: usize,
+}
+
+impl Node {
+    pub fn new(token: String, row: usize, col: usize) -> Node {
+        let token_len = token.len();
+        Node {
+            token,
+            token_len,
+            left: NIL,
+            right: NIL,
+            current: NIL,
+            parent: NIL,
+            root: NIL,
+            config: config::OpConfig::dummy(),
+            row,
+            col,
+        }
+    }
+
+    pub fn root() -> Node {
+        Node::new(String::new(), 0, 0)
+    }
+
+    pub const fn is_root(&self) -> bool {
+        self.current == self.root
+    }
+}
+
+pub enum ParseInsert {
+    Left,
+    LeftSwap,
+    Right,
+    RightRoot,
+    None,
+    Inline,
+    InlineForce,
+    Remove,
+    OpenBracket,
+    CloseBracket,
+}
+pub type ParseQuery = (NodeNum, bool);
+
+pub struct Parser<'path> {
+    pub nodes: Vec<Node>,
+    pub now: usize,
+
+    pub row: usize,
+    pub col: usize,
+    pub path: &'path str,
+    pub is_comment: bool,
+}
 
 impl Node {
     fn from(token: String, row: usize, col: usize) -> Node {
@@ -28,7 +99,7 @@ impl Node {
         node
     }
 
-    fn insert_left(&mut self, node: &mut Node, node_index: NodeNum, path: &str) -> ASTQuery {
+    fn insert_left(&mut self, node: &mut Node, node_index: NodeNum, path: &str) -> ParseQuery {
         if self.left != NIL {
             syntax::inappropriate_token(path, node)
         }
@@ -39,7 +110,7 @@ impl Node {
         node.left = self.current;
         node.update(node_index, self.parent, self.root);
     }
-    fn insert_left_swap_alert(&mut self, node_from: NodeNum, node_index: NodeNum) -> ASTQuery {
+    fn insert_left_swap_alert(&mut self, node_from: NodeNum, node_index: NodeNum) -> ParseQuery {
         if self.left == node_from {
             self.left = node_index;
         } else {
@@ -47,24 +118,24 @@ impl Node {
         }
         (node_index, true)
     }
-    fn insert_right(&mut self, node: &mut Node, node_index: NodeNum, path: &str) -> ASTQuery {
+    fn insert_right(&mut self, node: &mut Node, node_index: NodeNum, path: &str) -> ParseQuery {
         if self.right != NIL {
             syntax::inappropriate_token(path, node)
         }
         self.right = node_index;
         node.update(node_index, self.current, self.root)
     }
-    fn open_bracket(&mut self, node: &mut Node, node_index: NodeNum, path: &str) -> ASTQuery {
+    fn open_bracket(&mut self, node: &mut Node, node_index: NodeNum, path: &str) -> ParseQuery {
         node.token.clear();
         self.insert_right(node, node_index, path)
     }
-    fn insert_right_root(&mut self, node: &mut Node, node_index: NodeNum) -> ASTQuery {
+    fn insert_right_root(&mut self, node: &mut Node, node_index: NodeNum) -> ParseQuery {
         self.right = node_index;
         node.token = String::new();
         node.update(node_index, self.current, node_index)
     }
 
-    fn insert_inline(&mut self, node: &mut Node) -> ASTQuery {
+    fn insert_inline(&mut self, node: &mut Node) -> ParseQuery {
         if node.config.is_indent() {
             self.config.indent += node.config.indent;
             (self.current, false)
@@ -72,7 +143,7 @@ impl Node {
             self.insert_inline_force(node)
         }
     }
-    fn insert_inline_force(&mut self, node: &mut Node) -> ASTQuery {
+    fn insert_inline_force(&mut self, node: &mut Node) -> ParseQuery {
         match node.config.magic_code {
             config::MAGIC_CODE_STRING => node.token = String::from("\""),
             config::MAGIC_CODE_TAB => node.token = String::from("\t"),
@@ -83,25 +154,26 @@ impl Node {
         (self.current, false)
     }
 
-    fn update(&mut self, current: NodeNum, parent: NodeNum, root: NodeNum) -> ASTQuery {
+    fn update(&mut self, current: NodeNum, parent: NodeNum, root: NodeNum) -> ParseQuery {
         self.current = current;
         self.parent = parent;
         self.root = root;
         (current, true)
     }
 
-    fn close_bracket(&mut self) -> ASTQuery {
+    fn close_bracket(&mut self) -> ParseQuery {
         self.config.is_shell_closed = true;
+        self.config.order = config::OP_ORDER_BOTTOM;
         (self.current, true)
     }
 }
 
-impl<'path> AST<'path> {
-    fn new(path: &'path str) -> AST<'path> {
+impl<'path> Parser<'path> {
+    fn new(path: &'path str) -> Parser<'path> {
         let node = Node::root();
         let mut nodes = Vec::new();
         nodes.push(node);
-        AST {
+        Parser {
             nodes,
             now: NIL,
             row: OFFSET_ROW,
@@ -125,16 +197,16 @@ impl<'path> AST<'path> {
         let (parent_index, insert) = self.get_position(&node);
         let parent = &mut self.nodes[parent_index];
         let (node_index, allow_join) = match insert {
-            ASTInsert::Left         => parent.insert_left(&mut node, node_index, self.path),
-            ASTInsert::LeftSwap     => self.insert_left_swap(&mut node, node_index, parent_index),
-            ASTInsert::Right        => parent.insert_right(&mut node, node_index, self.path),
-            ASTInsert::RightRoot    => parent.insert_right_root(&mut node, node_index),
-            ASTInsert::None         => (parent.current, false),
-            ASTInsert::Inline       => parent.insert_inline(&mut node),
-            ASTInsert::InlineForce  => parent.insert_inline_force(&mut node),
-            ASTInsert::Remove       => self.remove(parent_index),
-            ASTInsert::OpenBracket  => parent.open_bracket(&mut node, node_index, self.path),
-            ASTInsert::CloseBracket => parent.close_bracket(),
+            ParseInsert::Left         => parent.insert_left(&mut node, node_index, self.path),
+            ParseInsert::LeftSwap     => self.insert_left_swap(&mut node, node_index, parent_index),
+            ParseInsert::Right        => parent.insert_right(&mut node, node_index, self.path),
+            ParseInsert::RightRoot    => parent.insert_right_root(&mut node, node_index),
+            ParseInsert::None         => (parent.current, false),
+            ParseInsert::Inline       => parent.insert_inline(&mut node),
+            ParseInsert::InlineForce  => parent.insert_inline_force(&mut node),
+            ParseInsert::Remove       => self.remove(parent_index),
+            ParseInsert::OpenBracket  => parent.open_bracket(&mut node, node_index, self.path),
+            ParseInsert::CloseBracket => parent.close_bracket(),
         };
 
         self.now = node_index;
@@ -143,7 +215,7 @@ impl<'path> AST<'path> {
         }
     }
 
-    fn insert_left_swap(&mut self, node: &mut Node, node_index: NodeNum, parent_index: NodeNum) -> ASTQuery {
+    fn insert_left_swap(&mut self, node: &mut Node, node_index: NodeNum, parent_index: NodeNum) -> ParseQuery {
         let parent = &mut self.nodes[parent_index];
         parent.insert_left_swap(node, node_index);
         let grandparent_index = parent.parent;
@@ -151,7 +223,7 @@ impl<'path> AST<'path> {
         grandparent.insert_left_swap_alert(parent_index, node_index)
     }
 
-    fn remove(&mut self, node_index: NodeNum) -> ASTQuery {
+    fn remove(&mut self, node_index: NodeNum) -> ParseQuery {
         let node = &mut self.nodes[node_index];
         let child_left_index = node.left;
         let child_right_index = node.right;
@@ -170,42 +242,42 @@ impl<'path> AST<'path> {
         (parent_index, false)
     }
 
-    fn get_position(&mut self, node: &Node) -> (NodeNum, ASTInsert) {
+    fn get_position(&mut self, node: &Node) -> (NodeNum, ParseInsert) {
         let mut parent = &self.nodes[self.now];
         // 1. If parent is String
         if parent.config.is_string && ! parent.config.is_shell_closed {
             if parent.config.is_string && node.config.is_shell_close() {
-                return (parent.current, ASTInsert::CloseBracket)
+                return (parent.current, ParseInsert::CloseBracket)
             }
-            return (parent.current, ASTInsert::InlineForce)
+            return (parent.current, ParseInsert::InlineForce)
         }
         // 2. is \n
         if node.config.is_end {
             self.is_comment = false;
-            return (parent.root, ASTInsert::RightRoot)
+            return (parent.root, ParseInsert::RightRoot)
         }
         // 3. is comment
         if node.config.is_comment || self.is_comment {
             self.is_comment = true;
-            return (parent.current, ASTInsert::None)
+            return (parent.current, ParseInsert::None)
         }
         // 4. If parent is root
         if parent.is_root()
         {
-            return (parent.current, if node.config.is_indent() { ASTInsert::Inline } else { ASTInsert::Left })
+            return (parent.current, if node.config.is_indent() { ParseInsert::Inline } else { ParseInsert::Left })
         }
         // 5. If child is indent
         if node.config.is_indent() {
-            return (parent.current, if parent.config.is_op { ASTInsert::None } else { ASTInsert::Inline })
+            return (parent.current, if parent.config.is_op { ParseInsert::None } else { ParseInsert::Inline })
         }
         if !node.config.is_op {
             // 6. If Parent isn't OP & Child isn't OP
-            if !parent.config.is_op { return (parent.current, ASTInsert::Inline) }
+            if !parent.config.is_op { return (parent.current, ParseInsert::Inline) }
             // 7. If Parent is    OP & Child isn't OP
-            return (parent.current, ASTInsert::Right)
+            return (parent.current, ParseInsert::Right)
         }
         // 8. If Child is Opening Bracket
-        if node.config.is_shell_open() { return (parent.current, ASTInsert::OpenBracket) }
+        if node.config.is_shell_open() { return (parent.current, ParseInsert::OpenBracket) }
         // 9. If Child is Closing Bracket
         if node.config.is_shell_close() {
             while node.config.shell_close != parent.config.shell_open {
@@ -218,9 +290,9 @@ impl<'path> AST<'path> {
                 }
             }
             if node.config.is_shell_removable() {
-                return (parent.current, ASTInsert::Remove)
+                return (parent.current, ParseInsert::Remove)
             }
-            return (parent.current, ASTInsert::CloseBracket)
+            return (parent.current, ParseInsert::CloseBracket)
         }
         // 10. If Child is Separator
         if node.config.is_separator {
@@ -236,26 +308,26 @@ impl<'path> AST<'path> {
                     if parent.right == NIL {
                         syntax::inappropriate_token(self.path, node)
                     }
-                    (parent.right, ASTInsert::LeftSwap)
+                    (parent.right, ParseInsert::LeftSwap)
                 },
-                false => (parent.current, ASTInsert::LeftSwap),
+                false => (parent.current, ParseInsert::LeftSwap),
             }
         }
         // 11. If Child is OP
         let mut is_upper = false;
         loop {
-            if parent.is_root() { return (parent.left, ASTInsert::LeftSwap) }
+            if parent.is_root() { return (parent.left, ParseInsert::LeftSwap) }
             if node.config.order >= parent.config.order { break }
             parent = &self.nodes[parent.parent];
             is_upper = true;
         }
         match is_upper {
-            true => (parent.right, ASTInsert::LeftSwap),
-            false => (parent.current, ASTInsert::Right),
+            true => (parent.right, ParseInsert::LeftSwap),
+            false => (parent.current, ParseInsert::Right),
         }
     }
 }
 
-pub fn new_ast(path: &str) -> AST {
-    AST::new(path)
+pub fn new_parser(path: &str) -> Parser {
+    Parser::new(path)
 }

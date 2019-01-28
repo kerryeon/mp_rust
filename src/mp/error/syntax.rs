@@ -10,7 +10,7 @@
         Date: 2019-01-08
 ------------------------------------------------------------ */
 
-use crate::mp::ast::Node;
+use crate::mp::parser::Node;
 
 const SYMBOL: &str = "Syntax";
 
@@ -32,4 +32,8 @@ pub fn inappropriate_token(path: &str, target: &Node) {
     { "This operator can't be here." } else
     { "This operand can't be here." };
     error_target(message, path, target)
+}
+
+pub fn lack_of_parameters(path: &str, target: &Node) {
+    error_target("Lack of parameters.", path, target)
 }

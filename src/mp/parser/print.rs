@@ -10,9 +10,10 @@
         Date: 2019-01-26
 ------------------------------------------------------------ */
 
-use crate::mp::ast::*;
+use crate::mp::parser::*;
 
-impl<'path> AST<'path> {
+impl<'path> Parser<'path> {
+    #[allow(dead_code)]
     pub fn tree(&self) {
         let root = &self.nodes[NIL];
         self._tree(root, "Root", 0);

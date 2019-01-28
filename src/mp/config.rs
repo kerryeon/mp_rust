@@ -44,9 +44,9 @@ pub type NumIndent = u8;
 pub type ShellMap = u8;
 pub type MagicMap = u8;
 const OP_ORDER_TOP: OpOrder = 0;
-const OP_ORDER_BOTTOM: OpOrder = 15;
+pub const OP_ORDER_BOTTOM: OpOrder = 15;
 const NO_SHELL: ShellMap = 0;
-const NO_INDENT: NumIndent = 0;
+pub const NO_INDENT: NumIndent = 0;
 
 const MAGIC_CODE_NONE       : MagicMap = 0;
 pub const MAGIC_CODE_STRING : MagicMap = 1;

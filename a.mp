@@ -1,9 +1,6 @@
-a: 3.14
 CLASS:
     x: 3
     y: 4
-c: CLASS
-    y: ?, 100 , 2 * 3, String?
-
-Print! "\thello M\tY \"
-\t\t:aaaa: world  "
+a: CLASS
+b: a
+c: b

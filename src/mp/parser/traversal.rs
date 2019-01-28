@@ -10,20 +10,20 @@
         Date: 2019-01-26
 ------------------------------------------------------------ */
 
-use crate::mp::ast::*;
+use crate::mp::parser::*;
 
-pub struct ASTTraversal<'nodes> {
+pub struct ParseTraversal<'nodes> {
     nodes: &'nodes Vec<Node>,
     root: &'nodes Node,
     pub has_next_line: bool,
 }
 
-impl<'nodes> ASTTraversal<'nodes> {
+impl<'nodes> ParseTraversal<'nodes> {
     pub const fn get_indents(&self) -> u8 {
         self.root.config.indent
     }
 
-    pub fn next_line(&mut self) -> ASTLine<'nodes> {
+    pub fn next_line(&mut self) -> ParseLine<'nodes> {
         let mut order: Vec<NodeNum> = Vec::new();
         let mut level: Vec<NodeNum> = Vec::new();
         let mut node = self.root;
@@ -55,15 +55,15 @@ impl<'nodes> ASTTraversal<'nodes> {
             first = false;
         }
 
-        ASTLine {
+        ParseLine {
             nodes: self.nodes,
             order,
         }
     }
 
-    fn new(nodes: &'nodes Vec<Node>) -> ASTTraversal<'nodes> {
+    fn new(nodes: &'nodes Vec<Node>) -> ParseTraversal<'nodes> {
         let root = &nodes[NIL];
-        ASTTraversal {
+        ParseTraversal {
             nodes,
             root,
             has_next_line: true,
@@ -71,12 +71,12 @@ impl<'nodes> ASTTraversal<'nodes> {
     }
 }
 
-pub struct ASTLine<'nodes> {
+pub struct ParseLine<'nodes> {
     nodes: &'nodes Vec<Node>,
     order: Vec<NodeNum>,
 }
 
-impl<'nodes> Iterator for ASTLine<'nodes> {
+impl<'nodes> Iterator for ParseLine<'nodes> {
     type Item = &'nodes Node;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -87,10 +87,10 @@ impl<'nodes> Iterator for ASTLine<'nodes> {
     }
 }
 
-impl<'path> AST<'path> {
+impl<'path> Parser<'path> {
 
     // Post-order
-    pub fn traversal(&self) -> ASTTraversal {
-        ASTTraversal::new(&self.nodes)
+    pub fn traversal(&self) -> ParseTraversal {
+        ParseTraversal::new(&self.nodes)
     }
 }
