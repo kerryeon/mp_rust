@@ -1,6 +1,6 @@
 /* ------------------------------------------------------------
-    Machine Pseudo-Code
-    Project.Github: "https://github.com/kerryeon/mp_rust"
+    Universal Task-Distributed Language
+    Project.Github: "https://github.com/kerryeon/nia_rust"
 ---------------------------------------------------------------
     Author:
         Name: "kerryeon"
@@ -11,10 +11,10 @@
 ------------------------------------------------------------ */
 
 use super::Module;
-use crate::mp::error::ErrorCode;
-use crate::mp::io::read_file;
-use crate::mp::lexer::generate;
-use crate::mp::parser::new_parser;
+use crate::nia::error::ErrorCode;
+use crate::nia::io::read_file;
+use crate::nia::lexer::generate;
+use crate::nia::parser::new_parser;
 
 impl Module {
     pub fn from_file(path: &'static str) -> Result<Module, ErrorCode> {

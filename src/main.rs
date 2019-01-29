@@ -1,6 +1,6 @@
 /* ------------------------------------------------------------
-    Machine Pseudo-Code
-    Project.Github: "https://github.com/kerryeon/mp_rust"
+    Universal Task-Distributed Language
+    Project.Github: "https://github.com/kerryeon/nia_rust"
 ---------------------------------------------------------------
     Author:
         Name: "kerryeon"
@@ -11,10 +11,10 @@
 ------------------------------------------------------------ */
 
 //mod console;
-mod mp;
+mod nia;
 
 fn main() {
-    match mp::compile("a.mp") {
+    match nia::compile("a.nia") {
         Ok(_module) => {},
         Err(_e) => {},
     }

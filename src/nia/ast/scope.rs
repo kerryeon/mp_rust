@@ -1,6 +1,6 @@
 /* ------------------------------------------------------------
-    Machine Pseudo-Code
-    Project.Github: "https://github.com/kerryeon/mp_rust"
+    Universal Task-Distributed Language
+    Project.Github: "https://github.com/kerryeon/nia_rust"
 ---------------------------------------------------------------
     Author:
         Name: "kerryeon"
@@ -14,8 +14,8 @@ use super::class::{Class, ClassID};
 use super::class_type::TypeID;
 use super::Module;
 use super::expression::Expression;
-use crate::mp::config;
-use crate::mp::parser::Node;
+use crate::nia::config;
+use crate::nia::parser::Node;
 
 pub struct Line {
     expr: Option<Expression>,
@@ -94,9 +94,9 @@ impl Module {
                     },
                     None => match line.indent == 0 {
                         true => {
-                            match line.expr {
+                            match &line.expr {
                                 Some(expr) => match expr {
-                                    Expression::ClassExpr(cls) => self.attrs.push(cls),
+                                    Expression::ClassExpr(cls) => self.attrs.push(*cls),
                                     _ => panic!(),
                                 },
                                 None => {},

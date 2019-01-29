@@ -1,6 +1,6 @@
-b: 3.14
+b: int
 
 a: b
     x: 3
     y: 4
-        z: w
+        z: b

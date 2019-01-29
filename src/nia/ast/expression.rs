@@ -1,6 +1,6 @@
 /* ------------------------------------------------------------
-    Machine Pseudo-Code
-    Project.Github: "https://github.com/kerryeon/mp_rust"
+    Universal Task-Distributed Language
+    Project.Github: "https://github.com/kerryeon/nia_rust"
 ---------------------------------------------------------------
     Author:
         Name: "kerryeon"
@@ -13,8 +13,8 @@
 use super::{Module, Boolean, Integer, Float};
 use super::class::ClassID;
 use super::class_type::TypeID;
-use crate::mp::error::syntax;
-use crate::mp::parser::{Node, NIL};
+use crate::nia::error::syntax;
+use crate::nia::parser::{Node, NIL};
 
 type Tuple = Vec<Expression>;
 

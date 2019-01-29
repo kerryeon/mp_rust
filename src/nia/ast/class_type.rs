@@ -1,6 +1,6 @@
 /* ------------------------------------------------------------
-    Machine Pseudo-Code
-    Project.Github: "https://github.com/kerryeon/mp_rust"
+    Universal Task-Distributed Language
+    Project.Github: "https://github.com/kerryeon/nia_rust"
 ---------------------------------------------------------------
     Author:
         Name: "kerryeon"

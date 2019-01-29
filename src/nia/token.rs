@@ -1,15 +1,17 @@
 /* ------------------------------------------------------------
-    Machine Pseudo-Code
-    Project.Github: "https://github.com/kerryeon/mp_rust"
+    Universal Task-Distributed Language
+    Project.Github: "https://github.com/kerryeon/nia_rust"
 ---------------------------------------------------------------
     Author:
         Name: "kerryeon"
         Email: "besqer996@gnu.ac.kr"
         Github: "https://github.com/kerryeon"
     Generated:
-        Date: "2019-01-08"
+        Date: "2019-01-07"
 ------------------------------------------------------------ */
 
-pub mod syntax;
+pub type Token = String;
 
-pub type ErrorCode = usize;
+pub fn new(token: &str) -> Token {
+    token.to_string()
+}

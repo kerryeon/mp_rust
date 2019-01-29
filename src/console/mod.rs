@@ -1,6 +1,6 @@
 /* ------------------------------------------------------------
-    Machine Pseudo-Code
-    Project.Github: !(https://github.com/kerryeon/mp_rust)
+    Universal Task-Distributed Language
+    Project.Github: !(https://github.com/kerryeon/nia_rust)
 ---------------------------------------------------------------
     Author:
         Name: kerryeon
@@ -11,7 +11,7 @@
 ------------------------------------------------------------ */
 
 use std::io;
-use crate::mp;
+use crate::nia;
 
 mod error;
 
@@ -27,7 +27,7 @@ impl Console {
     }
 
     pub fn compile(&self, path: &str, source: &str) {
-        mp::compile(path, source)
+        nia::compile(path, source)
     }
 
     pub fn begin_interactive(&self) {
