@@ -1,13 +1,13 @@
 /* ------------------------------------------------------------
     Machine Pseudo-Code
-    Project.Github: !(https://github.com/kerryeon/mp_rust)
+    Project.Github: "https://github.com/kerryeon/mp_rust"
 ---------------------------------------------------------------
     Author:
-        Name: kerryeon
-        Email: besqer996@gnu.ac.kr
-        Github: !(https://github.com/kerryeon)
+        Name: "kerryeon"
+        Email: "besqer996@gnu.ac.kr"
+        Github: "https://github.com/kerryeon"
     Generated:
-        Date: 2019-01-26
+        Date: "2019-01-26"
 ------------------------------------------------------------ */
 
 use super::*;

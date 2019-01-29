@@ -1,13 +1,13 @@
 /* ------------------------------------------------------------
     Machine Pseudo-Code
-    Project.Github: !(https://github.com/kerryeon/mp_rust)
+    Project.Github: "https://github.com/kerryeon/mp_rust"
 ---------------------------------------------------------------
     Author:
-        Name: kerryeon
-        Email: besqer996@gnu.ac.kr
-        Github: !(https://github.com/kerryeon)
+        Name: "kerryeon"
+        Email: "besqer996@gnu.ac.kr"
+        Github: "https://github.com/kerryeon"
     Generated:
-        Date: 2019-01-29
+        Date: "2019-01-29"
 ------------------------------------------------------------ */
 
 use super::class::{Class, ClassID};
@@ -114,9 +114,6 @@ impl Module {
                     },
                     None => {},
                 }
-
-                //println!("fdsdsfsdf {}", (&self.classes[cls]).name);
-                //self.attrs.push(cls)
 
                 self.scopes.push(Line::from(cls, cls_indent));
                 if line.indent > num_indent { continue }
