@@ -1,6 +1,6 @@
-CLASS:
+b: 3.14
+
+a: b
     x: 3
     y: 4
-a: CLASS
-b: a
-c: b
+        z: w

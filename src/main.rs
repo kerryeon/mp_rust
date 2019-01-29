@@ -14,5 +14,8 @@
 mod mp;
 
 fn main() {
-    mp::compile("a.mp");
+    match mp::compile("a.mp") {
+        Ok(_module) => {},
+        Err(_e) => {},
+    }
 }

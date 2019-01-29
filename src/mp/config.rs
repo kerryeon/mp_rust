@@ -18,9 +18,9 @@ const OP_ANY            : OpToken = OpToken::op                 ("?"    , 14);
 
 const OP_ADD            : OpToken = OpToken::op                 ("+"    , 8);
 const OP_SUB            : OpToken = OpToken::op                 ("-"    , 8);
-const OP_MUL            : OpToken = OpToken::op                 ("*"    , 8);
-const OP_DIV            : OpToken = OpToken::op                 ("/"    , 8);
-const OP_IDIV           : OpToken = OpToken::op                 ("//"   , 8);
+const OP_MUL            : OpToken = OpToken::op                 ("*"    , 9);
+const OP_DIV            : OpToken = OpToken::op                 ("/"    , 9);
+const OP_IDIV           : OpToken = OpToken::op                 ("//"   , 9);
 
 const BPO               : OpToken = OpToken::shell_open         ("("    , 1);
 const BSO               : OpToken = OpToken::shell_open         ("["    , 2);
@@ -44,6 +44,7 @@ pub type NumIndent = u8;
 pub type ShellMap = u8;
 pub type MagicMap = u8;
 const OP_ORDER_TOP: OpOrder = 0;
+const OP_ORDER_SEPARATOR: OpOrder = 7;
 pub const OP_ORDER_BOTTOM: OpOrder = 15;
 const NO_SHELL: ShellMap = 0;
 pub const NO_INDENT: NumIndent = 0;
@@ -235,7 +236,7 @@ impl OpToken {
     ) -> OpToken {
         OpToken::new(
             token,
-            OP_ORDER_TOP,
+            OP_ORDER_SEPARATOR,
             NO_INDENT,
             true,
             true,

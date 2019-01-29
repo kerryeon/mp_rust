@@ -10,7 +10,7 @@
         Date: 2019-01-26
 ------------------------------------------------------------ */
 
-use crate::mp::parser::*;
+use super::*;
 
 pub struct ParseTraversal<'nodes> {
     nodes: &'nodes Vec<Node>,

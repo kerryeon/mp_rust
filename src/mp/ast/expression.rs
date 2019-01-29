@@ -10,11 +10,13 @@
         Date: 2019-01-29
 ------------------------------------------------------------ */
 
-use crate::mp::ast::{Module, Boolean, Integer, Float};
-use crate::mp::ast::class::ClassID;
-use crate::mp::ast::class_type::TypeID;
+use super::{Module, Boolean, Integer, Float};
+use super::class::ClassID;
+use super::class_type::TypeID;
 use crate::mp::error::syntax;
 use crate::mp::parser::{Node, NIL};
+
+type Tuple = Vec<Expression>;
 
 pub enum Expression {
     BooleanExpr(Boolean),
@@ -22,12 +24,12 @@ pub enum Expression {
     FloatExpr(Float),
     StringExpr(String),
     ClassExpr(ClassID),
-    ScopeExpr(Box<Expression>, Box<Expression>),
+    ScopeExpr(Tuple, Tuple),
     UnaryExpr(String, Box<Expression>),
     BinaryExpr(String, Box<Expression>, Box<Expression>),
-    CallExpr(Box<Expression>, Vec<Expression>),
+    CallExpr(Box<Expression>, Tuple),
     TypeExpr(Option<ClassID>),
-    TupleExpr(Vec<Expression>),
+    TupleExpr(Tuple),
 }
 
 impl Expression {
@@ -49,110 +51,129 @@ impl Module {
         } else if node.config.is_op {
             println!("  [op] {}", name);
             match name.as_str() {
-                ":" => {
-                    let object_opt = self.get_expr_condition(node ,node.right != NIL);
-                    let subject = self.get_expr_force(node);
-                    let cls = self.get_class_id(subject);
-                    match object_opt {
-                        Some(object) => match object {
-                            _ => match object {
-                                Expression::TypeExpr(attr) => self.set_class_type(cls, attr),
-                                Expression::ClassExpr(attr) => self.set_class_class(cls, attr),
-                                Expression::BooleanExpr(value) => self.set_class_boolean(cls, value),
-                                Expression::IntegerExpr(value) => self.set_class_integer(cls, value),
-                                Expression::FloatExpr(value) => self.set_class_float(cls, value),
-                                Expression::StringExpr(value) => self.set_class_string(cls, value),
-                                _ => {},
-                            },
-                        },
-                        None => {},
-                    }
-                    println!("\t\t(타입을 정의합니다) {}: {}", (&self.attrs[cls]).name, self.get_class_type(cls));
-                    Expression::ClassExpr(cls)
+                ":"     => self.expr_assign(node),
+                "!"     => self.expr_call(node),
+                ","     => self.expr_tuple(node),
+                "?"     => self.expr_type(node),
+                "->"    => self.expr_scope(node),
+                "-"     => self.expr_minus(node, name),
+                _       => self.expr_binary(node, name),
+            }
+        } else { self.expr_value(name) }
+    }
+
+    fn expr_assign(&mut self, node: &Node) -> Expression {
+        let object_opt = self.get_expr_condition(node,node.right != NIL);
+        let subject = self.get_expr_force(node);
+        let cls = self.get_class_id(subject);
+        match object_opt {
+            Some(object) => match object {
+                _ => match object {
+                    Expression::TypeExpr(value) => self.set_class_type(cls, value),
+                    Expression::ClassExpr(value) => self.set_class_class(cls, value),
+                    Expression::BooleanExpr(value) => self.set_class_boolean(cls, value),
+                    Expression::IntegerExpr(value) => self.set_class_integer(cls, value),
+                    Expression::FloatExpr(value) => self.set_class_float(cls, value),
+                    Expression::StringExpr(value) => self.set_class_string(cls, value),
+                    _ => {},
                 },
-                "!" => {
-                    let object_opt = self.get_expr_condition(node ,node.right != NIL);
-                    let subject = self.get_expr_force(node);
-                    let cls = self.get_class_id(subject);
-                    Expression::CallExpr(Box::new(Expression::ClassExpr(cls)), match object_opt {
-                        Some(object) => match object {
-                            Expression::TupleExpr(args) => args,
-                            _ => vec!(object),
-                        },
-                        None => vec!(),
-                    })
-                },
-                "," => {
-                    let object_opt = self.get_expr_condition(node, node.right != NIL);
-                    let subject = self.get_expr_force(node);
-                    match object_opt {
-                        Some(object) => match object {
-                            Expression::TupleExpr(mut args) => {
-                                args.push(subject);
-                                Expression::TupleExpr(args)
-                            },
-                            _ => {
-                                Expression::TupleExpr(vec!(object, subject))
-                            },
-                        },
-                        None => Expression::TupleExpr(vec!(subject)),
-                    }
-                },
-                "?" => {
-                    let subject_opt = self.get_expr_condition(node, node.left != NIL);
-                    match subject_opt {
-                        Some(subject) => match subject {
-                            Expression::ClassExpr(cls) => Expression::TypeExpr(Some(cls)),
-                            _ => panic!(""),
-                        }
-                        None => Expression::TypeExpr(None)
-                    }
-                },
-                "-" => {
-                    let object = self.get_expr_force(node);
-                    let subject_opt = self.get_expr_condition(node, node.left != NIL);
-                    match subject_opt {
-                        Some(subject) => Expression::BinaryExpr(name, Box::new(subject), Box::new(object)),
-                        None => match object {
-                            Expression::IntegerExpr(value) => Expression::IntegerExpr(-value),
-                            Expression::FloatExpr(value) => Expression::FloatExpr(-value),
-                            _ => Expression::UnaryExpr(name, Box::new(object)),
-                        },
-                    }
-                },
-                "->" => {
-                    let object = self.get_expr_force(node);
-                    let subject = self.get_expr_force(node);
-                    Expression::ScopeExpr(Box::new(subject), Box::new(object))
+            },
+            None => {},
+        }
+        println!("    [define type] {}: {}", (&self.classes[cls]).name, self.get_class_type(cls));
+        Expression::ClassExpr(cls)
+    }
+    fn expr_call(&mut self, node: &Node) -> Expression {
+        let object_opt = self.get_expr_condition(node ,node.right != NIL);
+        let subject = self.get_expr_force(node);
+        let cls = self.get_class_id(subject);
+        Expression::CallExpr(Box::new(Expression::ClassExpr(cls)), match object_opt {
+            Some(object) => match object {
+                Expression::TupleExpr(args) => args,
+                _ => vec!(object),
+            },
+            None => vec!(),
+        })
+    }
+    fn expr_tuple(&mut self, node: &Node) -> Expression {
+        let object_opt = self.get_expr_condition(node, node.right != NIL);
+        let subject = self.get_expr_force(node);
+        match object_opt {
+            Some(object) => match object {
+                Expression::TupleExpr(mut args) => {
+                    args.push(subject);
+                    Expression::TupleExpr(args)
                 },
                 _ => {
-                    let object = self.get_expr_force(node);
-                    let subject = self.get_expr_force(node);
-                    Expression::BinaryExpr(name, Box::new(subject), Box::new(object))
+                    Expression::TupleExpr(vec!(object, subject))
+                },
+            },
+            None => Expression::TupleExpr(vec!(subject)),
+        }
+    }
+    fn expr_type(&mut self, node: &Node) -> Expression {
+        assert_eq!(node.right, NIL);
+        let subject_opt = self.get_expr_condition(node, node.left != NIL);
+        match subject_opt {
+            Some(subject) => match subject {
+                Expression::ClassExpr(cls) => Expression::TypeExpr(Some(cls)),
+                _ => panic!(""),
+            }
+            None => Expression::TypeExpr(None)
+        }
+    }
+    fn expr_scope(&mut self, node: &Node) -> Expression {
+        fn wrap_vector(expr: Expression) -> Tuple {
+            match expr {
+                Expression::TupleExpr(args) => args,
+                _ => {
+                    println!("sex");
+                    vec!(expr)
                 },
             }
-        } else {
-            assert_ne!(name.len(), 0);
-            match name.as_str() {
-                "yes" => Expression::BooleanExpr(true),
-                "no" => Expression::BooleanExpr(false),
-                _ => match name.parse::<Integer>() {
+        }
+        let object = wrap_vector(self.get_expr_force(node));
+        let subject = wrap_vector(self.get_expr_force(node));
+        Expression::ScopeExpr(subject, object)
+    }
+    fn expr_minus(&mut self, node: &Node, name: String) -> Expression {
+        let object = self.get_expr_force(node);
+        let subject_opt = self.get_expr_condition(node, node.left != NIL);
+        match subject_opt {
+            Some(subject) => Expression::BinaryExpr(name, Box::new(subject), Box::new(object)),
+            None => match object {
+                Expression::IntegerExpr(value) => Expression::IntegerExpr(-value),
+                Expression::FloatExpr(value) => Expression::FloatExpr(-value),
+                _ => Expression::UnaryExpr(name, Box::new(object)),
+            },
+        }
+    }
+    fn expr_binary(&mut self, node: &Node, name: String) -> Expression {
+        let object = self.get_expr_force(node);
+        let subject = self.get_expr_force(node);
+        Expression::BinaryExpr(name, Box::new(subject), Box::new(object))
+    }
+    fn expr_value(&mut self, name: String) -> Expression {
+        assert_ne!(name.len(), 0);
+        match name.as_str() {
+            "yes" => Expression::BooleanExpr(true),
+            "no" => Expression::BooleanExpr(false),
+            _ => match name.parse::<Integer>() {
+                Ok(n) => {
+                    println!("  [int] {}", name);
+                    Expression::IntegerExpr(n)
+                },
+                Err(_) => match name.parse::<Float>() {
                     Ok(n) => {
-                        println!("  [int] {}", name);
-                        Expression::IntegerExpr(n)
+                        println!("  [float] {}", name);
+                        Expression::FloatExpr(n)
                     },
-                    Err(_) => match name.parse::<Float>() {
-                        Ok(n) => {
-                            println!("  [float] {}", name);
-                            Expression::FloatExpr(n)
-                        },
-                        Err(_) => {
-                            println!("  [class] {}", name);
-                            Expression::ClassExpr(self.find_class(name))
-                        },
+                    Err(_) => {
+                        println!("  [class] {}", name);
+                        Expression::ClassExpr(self.find_class(name))
                     },
                 },
-            }
+            },
         }
     }
 
@@ -178,33 +199,32 @@ impl Module {
         }
     }
     fn set_class_type(&mut self, cls: ClassID, value: Option<ClassID>) {
-        println!("aaa type");
         let t = match value {
-            Some(id) => TypeID::from(&self.attrs[id]),
+            Some(id) => TypeID::from(&self.classes[id]),
             None => TypeID::Any
         };
-        let cls = &mut self.attrs[cls];
+        let cls = &mut self.classes[cls];
         cls.set_type(t)
     }
     fn set_class_class(&mut self, cls: ClassID, value: ClassID) {
-        let value_type = (&self.attrs[value]).type_id.clone();
-        let cls = &mut self.attrs[cls];
+        let value_type = (&self.classes[value]).type_id.clone();
+        let cls = &mut self.classes[cls];
         cls.set_class(value, value_type)
     }
     fn set_class_boolean(&mut self, cls: ClassID, value: Boolean) {
-        let cls = &mut self.attrs[cls];
+        let cls = &mut self.classes[cls];
         cls.set_boolean(value)
     }
     fn set_class_integer(&mut self, cls: ClassID, value: Integer) {
-        let cls = &mut self.attrs[cls];
+        let cls = &mut self.classes[cls];
         cls.set_integer(value)
     }
     fn set_class_float(&mut self, cls: ClassID, value: Float) {
-        let cls = &mut self.attrs[cls];
+        let cls = &mut self.classes[cls];
         cls.set_float(value)
     }
     fn set_class_string(&mut self, cls: ClassID, value: String) {
-        let cls = &mut self.attrs[cls];
+        let cls = &mut self.classes[cls];
         cls.set_string(value)
     }
 }

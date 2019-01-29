@@ -10,8 +10,8 @@
         Date: 2019-01-04
 ------------------------------------------------------------ */
 
-use crate::mp::config;
-use crate::mp::token;
+use super::config;
+use super::token;
 
 use std::str::Chars;
 

@@ -13,9 +13,9 @@
 mod print;
 mod traversal;
 
-use crate::mp::config;
-use crate::mp::error::syntax;
-use crate::mp::token::Token;
+use super::config;
+use super::error::syntax;
+use super::token::Token;
 
 pub type NodeNum = usize;
 

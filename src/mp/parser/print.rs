@@ -10,7 +10,7 @@
         Date: 2019-01-26
 ------------------------------------------------------------ */
 
-use crate::mp::parser::*;
+use super::*;
 
 impl<'path> Parser<'path> {
     #[allow(dead_code)]

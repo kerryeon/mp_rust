@@ -10,8 +10,8 @@
         Date: 2019-01-29
 ------------------------------------------------------------ */
 
-use crate::mp::ast::{Boolean, Integer, Float};
-use crate::mp::ast::class_type::TypeID;
+use super::{Boolean, Integer, Float};
+use super::class_type::TypeID;
 
 pub type ClassID = usize;
 
