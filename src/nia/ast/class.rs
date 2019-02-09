@@ -92,6 +92,9 @@ impl Class {
         self.value = ClassType::ValueString(value)
     }
     pub fn set_scope(&mut self, inputs: Inputs, outputs: Outputs) {
+        for attr in &inputs {
+            self.add_attr(*attr)
+        }
         self.type_id = TypeID::void_scope(inputs.len(), outputs.len());
         self.value = ClassType::Scope(Scope::new(inputs, outputs))
     }
@@ -101,6 +104,11 @@ impl Class {
     }
 
     pub fn add_attr(&mut self, attr: ClassID) {
+        // TODO in-place branch
+        // TODO ==> Create a new var about 'Whether this var is -used-'
+        for a in &self.attrs {
+            if *a == attr { return }
+        }
         self.attrs.push(attr)
     }
 }

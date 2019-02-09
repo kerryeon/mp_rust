@@ -10,7 +10,7 @@
         Date: "2019-01-29"
 ------------------------------------------------------------ */
 
-use super::class::{Class, ClassID, Scope};
+use super::class::{Class, ClassID};
 use super::class_type::TypeID;
 use super::Module;
 use super::expression::Expression;
@@ -82,18 +82,18 @@ impl Module {
                     false => panic!(),
                 },
             };
-            match &line.expr {
-                Some(expr) => match expr {
-                    Expression::ClassExpr(attr) => {
-                        self.update_type_for_class(*attr);
-                    },
-                    _ => panic!(),
-                },
-                None => {},
-            }
 
             if line.indent < num_indent { self.scopes.push(line) }
             else {
+                match &line.expr {
+                    Some(expr) => match expr {
+                        Expression::ClassExpr(attr) => {
+                            self.update_type_for_class(*attr);
+                        },
+                        _ => panic!(),
+                    },
+                    None => {},
+                }
                 let (cls, cls_indent) = match self.scopes.pop() {
                     Some(line) => match line.expr {
                         Some(expr) => match expr {
@@ -167,19 +167,32 @@ impl Module {
     fn update_type_for_class(&mut self, id: ClassID) {
         let cls = &self.classes[id];
         let (inputs, outputs) = match cls.get_scope() {
-            Some(scope) => self.collect_type_scope(scope),
+            Some(scope) => {
+                let (inputs, outputs) = scope.unzip();
+                let outputs: Vec<TypeID> = outputs.iter().map(|a| {
+                    let a = &self.classes[a.clone()];
+                    for b in &cls.attrs {
+                        let b = &self.classes[b.clone()];
+                        if a.name == b.name { return b.type_id.clone() }
+                    }
+                    panic!()
+                }).collect();
+                (self.collect_type_tuple(inputs), outputs)
+            },
             None => return,
         };
+        for (idx, attr) in inputs.iter().enumerate() {
+            println!("    [expected type of inputs[{}]] {}", idx, attr.as_str());
+        }
+        for (idx, attr) in outputs.iter().enumerate() {
+            println!("    [expected type of outputs[{}]] {}", idx, attr.as_str());
+        }
         let cls = &mut self.classes[id];
         cls.set_scope_type(inputs, outputs)
     }
 
     fn collect_type_tuple(&self, tuple: &Vec<ClassID>) -> Vec<TypeID> {
         tuple.iter().map(|id| self.classes[*id].type_id.clone()).collect()
-    }
-    fn collect_type_scope(&self, scope: &Scope) -> (Vec<TypeID>, Vec<TypeID>) {
-        let (inputs, outputs) = scope.unzip();
-        (self.collect_type_tuple(inputs), self.collect_type_tuple(outputs))
     }
 
     fn get_class_scope(&self) -> Option<&Class> {
@@ -212,14 +225,9 @@ impl Module {
         self.new_class(name)
     }
     fn find_class_in_class(&self, cls: &Class, name: &String) -> Option<ClassID> {
-        println!("dfd! {} vs {}", cls.name, name);
         if cls.name == *name {
             return Some(cls.current)
         }
-        let (inputs, outputs) = match cls.get_scope() {
-            Some(scope) => self.collect_type_scope(scope),
-            None => return None,
-        };
         None
     }
     fn new_class(&mut self, name: String) -> ClassID {
