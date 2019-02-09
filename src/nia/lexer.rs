@@ -28,7 +28,7 @@ pub struct Tokenizer<'source> {
 }
 
 impl<'source> Tokenizer<'source> {
-    fn new(source: &str) -> Tokenizer {
+    fn new(source: &'source str) -> Self {
         Tokenizer {
             begin: 0,
             end: 1,

@@ -22,22 +22,22 @@ Main:
 1. 팩토리얼 계산
 ```
 Factorial[]: x -> z
-    z: match! x <= 1
-        yes: 1
-        no:
-            Factorial! (x-1) -> y
-            x * y
+    z: if x <= 1
+        1
+    else
+        Factorial! (x-1) -> y
+        x * y
 
 Main:
     5 -> ?:
-        Factorial!
-        Print!
+        Factorial
+        Print
 
 ```
 2. `LeNet`
 ```
 Using[]:
-    Deep learning:
+    Deep learning
         platform: PyTorch  # Tensorflow, CNTK, ...
 
 My Convolution: Convolution 2D
@@ -48,24 +48,24 @@ My Pooling: Max Pooling 2D
     kernel size: 2, 2
 
 LeNet: x -> x
-    My Convolution!
+    My Convolution
         channel: 1, 32
-    My Pooling!
-    ReLU!
-    My Convolution!
+    My Pooling
+    ReLU
+    My Convolution
         channel: 32, 64
-    My Pooling!
-    ReLU!
-    Transform!
+    My Pooling
+    ReLU
+    Transform
         dim: ?, (64 * 7 * 7)
-    Dense!
+    Dense
         dim in: ?, (64 * 7 * 7)
         dim out: ?, 1024
-    ReLU!
-    Dense!
+    ReLU
+    Dense
         dim in: ?, 1024
         dim out: ?, 10
-    LogSoftmax!
+    LogSoftmax
 
 Main:
     model: LeNet

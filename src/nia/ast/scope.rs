@@ -10,7 +10,7 @@
         Date: "2019-01-29"
 ------------------------------------------------------------ */
 
-use super::class::{Class, ClassID};
+use super::class::{Class, ClassID, Scope};
 use super::class_type::TypeID;
 use super::Module;
 use super::expression::Expression;
@@ -23,14 +23,14 @@ pub struct Line {
 }
 
 impl Line {
-    fn new(indent: config::NumIndent) -> Line {
-        Line {
+    fn new(indent: config::NumIndent) -> Self {
+        Self {
             expr: None,
             indent,
         }
     }
-    fn from(cls: ClassID, indent: config::NumIndent) -> Line {
-        Line {
+    fn from(cls: ClassID, indent: config::NumIndent) -> Self {
+        Self {
             expr: Some(Expression::ClassExpr(cls)),
             indent,
         }
@@ -38,8 +38,8 @@ impl Line {
 }
 
 impl Module {
-    pub fn new(path: &'static str) -> Module {
-        Module {
+    pub fn new(path: &'static str) -> Self {
+        Self {
             path,
             attrs: vec!(),
             classes: vec!(),
@@ -49,7 +49,7 @@ impl Module {
         }
     }
     pub fn begin_line(&mut self, num_indent: config::NumIndent) {
-        println!("[new line] [{}]", num_indent);
+        println!("[new line] {} indents", num_indent);
         let line = Line::new(num_indent);
         self.add_attr(num_indent);
         self.scopes.push(line)
@@ -82,6 +82,16 @@ impl Module {
                     false => panic!(),
                 },
             };
+            match &line.expr {
+                Some(expr) => match expr {
+                    Expression::ClassExpr(attr) => {
+                        self.update_type_for_class(*attr);
+                    },
+                    _ => panic!(),
+                },
+                None => {},
+            }
+
             if line.indent < num_indent { self.scopes.push(line) }
             else {
                 let (cls, cls_indent) = match self.scopes.pop() {
@@ -109,7 +119,9 @@ impl Module {
 
                 match line.expr {
                     Some(expr) => match expr {
-                        Expression::ClassExpr(attr) => self.add_attr_in_class(cls, attr),
+                        Expression::ClassExpr(attr) => {
+                            self.add_attr_in_class(cls, attr);
+                        },
                         _ => panic!(),
                     },
                     None => {},
@@ -128,8 +140,9 @@ impl Module {
         };
         loop {
             for attr in scope.attrs.iter().map(|id| &self.classes[*id]) {
-                if attr.name == name {
-                    return attr.current
+                match self.find_class_in_class(attr, &name) {
+                    Some(id) => return id,
+                    None => continue,
                 }
             }
             scope = match self.get_class_parent(scope) {
@@ -149,8 +162,26 @@ impl Module {
 
     fn add_attr_in_class(&mut self, cls: ClassID, attr: ClassID) {
         let cls = &mut self.classes[cls];
-        cls.attrs.push(attr)
+        cls.add_attr(attr)
     }
+    fn update_type_for_class(&mut self, id: ClassID) {
+        let cls = &self.classes[id];
+        let (inputs, outputs) = match cls.get_scope() {
+            Some(scope) => self.collect_type_scope(scope),
+            None => return,
+        };
+        let cls = &mut self.classes[id];
+        cls.set_scope_type(inputs, outputs)
+    }
+
+    fn collect_type_tuple(&self, tuple: &Vec<ClassID>) -> Vec<TypeID> {
+        tuple.iter().map(|id| self.classes[*id].type_id.clone()).collect()
+    }
+    fn collect_type_scope(&self, scope: &Scope) -> (Vec<TypeID>, Vec<TypeID>) {
+        let (inputs, outputs) = scope.unzip();
+        (self.collect_type_tuple(inputs), self.collect_type_tuple(outputs))
+    }
+
     fn get_class_scope(&self) -> Option<&Class> {
         if self.scopes.len() >= 2 {
             match self.scopes.get(self.scopes.len() - 2) {
@@ -173,11 +204,23 @@ impl Module {
     }
     fn find_class_in_module(&mut self, name: String) -> ClassID {
         for attr in (&self.attrs).iter().map(|id| &self.classes[*id]) {
-            if attr.name == name {
-                return attr.current
+            match self.find_class_in_class(attr, &name) {
+                Some(id) => return id,
+                None => continue,
             }
         }
         self.new_class(name)
+    }
+    fn find_class_in_class(&self, cls: &Class, name: &String) -> Option<ClassID> {
+        println!("dfd! {} vs {}", cls.name, name);
+        if cls.name == *name {
+            return Some(cls.current)
+        }
+        let (inputs, outputs) = match cls.get_scope() {
+            Some(scope) => self.collect_type_scope(scope),
+            None => return None,
+        };
+        None
     }
     fn new_class(&mut self, name: String) -> ClassID {
         println!("    [new class] {}", name);

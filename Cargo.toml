@@ -16,3 +16,6 @@ lto = true
 panic = 'unwind'
 
 [dependencies]
+cranelift = "0.28.0"
+cranelift-module = "0.28.0"
+cranelift-simplejit = "0.28.0"

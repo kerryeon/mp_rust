@@ -16,6 +16,10 @@ const OP_TOWARD         : OpToken = OpToken::op_prime           ("->"   , 3);
 const OP_STRING         : OpToken = OpToken::op_prime           ("%"    , 4);
 const OP_ANY            : OpToken = OpToken::op                 ("?"    , 14);
 
+const OP_IF            : OpToken = OpToken::op                  ("if"   , 7);
+const OP_ELIF          : OpToken = OpToken::op                  ("elif" , 7);
+const OP_ELSE          : OpToken = OpToken::op                  ("else" , 7);
+
 const OP_ADD            : OpToken = OpToken::op                 ("+"    , 8);
 const OP_SUB            : OpToken = OpToken::op                 ("-"    , 8);
 const OP_MUL            : OpToken = OpToken::op                 ("*"    , 9);
@@ -84,8 +88,8 @@ impl OpConfig {
         shell_open: ShellMap,
         shell_close: ShellMap,
         magic_code: MagicMap,
-    ) -> OpConfig {
-        OpConfig {
+    ) -> Self {
+        Self {
             order,
             indent,
             is_op,
@@ -101,8 +105,8 @@ impl OpConfig {
         }
     }
 
-    pub const fn dummy() -> OpConfig {
-        OpConfig::new(
+    pub const fn dummy() -> Self {
+        Self::new(
             OP_ORDER_BOTTOM,
             NO_INDENT,
             false,
@@ -118,8 +122,8 @@ impl OpConfig {
         )
     }
 
-    pub const fn clone(&self) -> OpConfig {
-        OpConfig::new(
+    pub const fn clone(&self) -> Self {
+        Self::new(
             self.order,
             self.indent,
             self.is_op,
@@ -169,8 +173,8 @@ impl OpToken {
         shell_open: ShellMap,
         shell_close: ShellMap,
         magic_code: MagicMap,
-    ) -> OpToken {
-        OpToken {
+    ) -> Self {
+        Self {
             token,
             config: OpConfig::new(
                 order,
@@ -192,8 +196,8 @@ impl OpToken {
     const fn op(
         token: &'static str,
         order: OpOrder,
-    ) -> OpToken {
-        OpToken::new(
+    ) -> Self {
+        Self::new(
             token,
             order,
             NO_INDENT,
@@ -213,8 +217,8 @@ impl OpToken {
     const fn op_prime(
         token: &'static str,
         order: OpOrder,
-    ) -> OpToken {
-        OpToken::new(
+    ) -> Self {
+        Self::new(
             token,
             order,
             NO_INDENT,
@@ -233,8 +237,8 @@ impl OpToken {
 
     const fn separator(
         token: &'static str,
-    ) -> OpToken {
-        OpToken::new(
+    ) -> Self {
+        Self::new(
             token,
             OP_ORDER_SEPARATOR,
             NO_INDENT,
@@ -256,8 +260,8 @@ impl OpToken {
         indent: NumIndent,
         is_end: bool,
         is_comment: bool,
-    ) -> OpToken {
-        OpToken::new(
+    ) -> Self {
+        Self::new(
             token,
             OP_ORDER_BOTTOM,
             indent,
@@ -277,8 +281,8 @@ impl OpToken {
     const fn indent(
         token: &'static str,
         indent: NumIndent,
-    ) -> OpToken {
-        OpToken::no_op(
+    ) -> Self {
+        Self::no_op(
             token,
             indent,
             false,
@@ -288,8 +292,8 @@ impl OpToken {
 
     const fn jump(
         token: &'static str,
-    ) -> OpToken {
-        OpToken::no_op(
+    ) -> Self {
+        Self::no_op(
             token,
             NO_INDENT,
             true,
@@ -299,8 +303,8 @@ impl OpToken {
 
     const fn comment(
         token: &'static str,
-    ) -> OpToken {
-        OpToken::no_op(
+    ) -> Self {
+        Self::no_op(
             token,
             NO_INDENT,
             false,
@@ -311,8 +315,8 @@ impl OpToken {
     const fn shell_open(
         token: &'static str,
         map: ShellMap,
-    ) -> OpToken {
-        OpToken::new(
+    ) -> Self {
+        Self::new(
             token,
             OP_ORDER_TOP,
             NO_INDENT,
@@ -332,8 +336,8 @@ impl OpToken {
     const fn shell_string(
         token: &'static str,
         map: ShellMap,
-    ) -> OpToken {
-        OpToken::new(
+    ) -> Self {
+        Self::new(
             token,
             OP_ORDER_BOTTOM,
             NO_INDENT,
@@ -353,8 +357,8 @@ impl OpToken {
     const fn shell_close(
         token: &'static str,
         map: ShellMap,
-    ) -> OpToken {
-        OpToken::new(
+    ) -> Self {
+        Self::new(
             token,
             OP_ORDER_BOTTOM,
             NO_INDENT,
@@ -374,8 +378,8 @@ impl OpToken {
     const fn magic_code(
         token: &'static str,
         magic_code: MagicMap,
-    ) -> OpToken {
-        OpToken::new(
+    ) -> Self {
+        Self::new(
             token,
             OP_ORDER_BOTTOM,
             NO_INDENT,
@@ -393,12 +397,15 @@ impl OpToken {
     }
 }
 
-pub const OP_ORDER: [OpToken; 24] = [
+pub const OP_ORDER: [OpToken; 27] = [
     OP_INPLACE      ,
     OP_CALL         ,
     OP_TOWARD       ,
     OP_STRING       ,
     OP_ANY          ,
+    OP_IF           ,
+    OP_ELIF         ,
+    OP_ELSE         ,
     OP_ADD          ,
     OP_SUB          ,
     OP_MUL          ,
@@ -420,12 +427,15 @@ pub const OP_ORDER: [OpToken; 24] = [
     MAGIC_TAB       ,
 ];
 
-pub const OP_TOKEN: [OpToken; 22] = [
+pub const OP_TOKEN: [OpToken; 25] = [
     OP_INPLACE      ,
     OP_CALL         ,
     OP_TOWARD       ,
     OP_STRING       ,
     OP_ANY          ,
+    OP_IF           ,
+    OP_ELIF         ,
+    OP_ELSE         ,
     OP_ADD          ,
     OP_MUL          ,
     OP_IDIV         ,

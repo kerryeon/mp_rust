@@ -1,0 +1,18 @@
+Add Until 5: x -> x
+    (if) x < 4: Add Until 5! (x + 1)
+    (else) x
+
+Factorial: x -> x
+    (if) x <= 1: 1
+    (else):
+        Factorial! (x-1) -> y
+        x * y
+
+# Side-Effect
+Class Friendly Method: x -> k
+    k: k ? 0
+    k: x + k
+# SAME
+Class Friendly Method: x -> k
+    k: x + (k ? 0)
+

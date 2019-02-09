@@ -17,7 +17,7 @@ use crate::nia::lexer::generate;
 use crate::nia::parser::new_parser;
 
 impl Module {
-    pub fn from_file(path: &'static str) -> Result<Module, ErrorCode> {
+    pub fn from_file(path: &'static str) -> Result<Self, ErrorCode> {
         let source = match read_file(path) {
             Ok(s) => s,
             Err(e) => {
@@ -32,7 +32,7 @@ impl Module {
         }
         //root.tree();
 
-        let mut module = Module::new(path);
+        let mut module = Self::new(path);
         let mut traversal = root.traversal();
         while traversal.has_next_line {
             module.begin_line(traversal.get_indents());

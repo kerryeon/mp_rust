@@ -25,7 +25,6 @@ pub const OFFSET_COL: usize = 1;
 
 pub struct Node {
     pub token: String,
-    pub token_len: usize,
     pub left: NodeNum,
     pub right: NodeNum,
     pub current: NodeNum,
@@ -38,11 +37,9 @@ pub struct Node {
 }
 
 impl Node {
-    pub fn new(token: String, row: usize, col: usize) -> Node {
-        let token_len = token.len();
-        Node {
+    pub fn new(token: String, row: usize, col: usize) -> Self {
+        Self {
             token,
-            token_len,
             left: NIL,
             right: NIL,
             current: NIL,
@@ -54,8 +51,8 @@ impl Node {
         }
     }
 
-    pub fn root() -> Node {
-        Node::new(String::new(), 0, 0)
+    pub fn root() -> Self {
+        Self::new(String::new(), 0, 0)
     }
 
     pub const fn is_root(&self) -> bool {
@@ -88,8 +85,8 @@ pub struct Parser<'path> {
 }
 
 impl Node {
-    fn from(token: String, row: usize, col: usize) -> Node {
-        let mut node = Node::new(token, row, col);
+    fn from(token: String, row: usize, col: usize) -> Self {
+        let mut node = Self::new(token, row, col);
         for op in config::OP_ORDER.iter() {
             if node.token == op.token {
                 node.config = op.config.clone();
@@ -99,14 +96,14 @@ impl Node {
         node
     }
 
-    fn insert_left(&mut self, node: &mut Node, node_index: NodeNum, path: &str) -> ParseQuery {
+    fn insert_left(&mut self, node: &mut Self, node_index: NodeNum, path: &str) -> ParseQuery {
         if self.left != NIL {
             syntax::inappropriate_token(path, node)
         }
         self.left = node_index;
         node.update(node_index, self.current, self.root)
     }
-    fn insert_left_swap(&mut self, node: &mut Node, node_index: NodeNum) {
+    fn insert_left_swap(&mut self, node: &mut Self, node_index: NodeNum) {
         node.left = self.current;
         node.update(node_index, self.parent, self.root);
     }
@@ -118,39 +115,38 @@ impl Node {
         }
         (node_index, true)
     }
-    fn insert_right(&mut self, node: &mut Node, node_index: NodeNum, path: &str) -> ParseQuery {
+    fn insert_right(&mut self, node: &mut Self, node_index: NodeNum, path: &str) -> ParseQuery {
         if self.right != NIL {
             syntax::inappropriate_token(path, node)
         }
         self.right = node_index;
         node.update(node_index, self.current, self.root)
     }
-    fn open_bracket(&mut self, node: &mut Node, node_index: NodeNum, path: &str) -> ParseQuery {
+    fn open_bracket(&mut self, node: &mut Self, node_index: NodeNum, path: &str) -> ParseQuery {
         node.token.clear();
         self.insert_right(node, node_index, path)
     }
-    fn insert_right_root(&mut self, node: &mut Node, node_index: NodeNum) -> ParseQuery {
+    fn insert_right_root(&mut self, node: &mut Self, node_index: NodeNum) -> ParseQuery {
         self.right = node_index;
         node.token = String::new();
         node.update(node_index, self.current, node_index)
     }
 
-    fn insert_inline(&mut self, node: &mut Node) -> ParseQuery {
-        if node.config.is_indent() {
+    fn insert_inline(&mut self, node: &mut Self) -> ParseQuery {
+        if self.is_root() && node.config.is_indent() {
             self.config.indent += node.config.indent;
             (self.current, false)
         } else {
             self.insert_inline_force(node)
         }
     }
-    fn insert_inline_force(&mut self, node: &mut Node) -> ParseQuery {
+    fn insert_inline_force(&mut self, node: &mut Self) -> ParseQuery {
         match node.config.magic_code {
             config::MAGIC_CODE_STRING => node.token = String::from("\""),
             config::MAGIC_CODE_TAB => node.token = String::from("\t"),
             _ => {},
         }
         self.token = format!("{}{}", self.token, node.token).to_string();
-        self.token_len = self.token.len();
         (self.current, false)
     }
 
@@ -169,11 +165,11 @@ impl Node {
 }
 
 impl<'path> Parser<'path> {
-    fn new(path: &'path str) -> Parser<'path> {
+    fn new(path: &'path str) -> Self {
         let node = Node::root();
         let mut nodes = Vec::new();
         nodes.push(node);
-        Parser {
+        Self {
             nodes,
             now: NIL,
             row: OFFSET_ROW,
